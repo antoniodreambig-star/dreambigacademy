@@ -3,6 +3,7 @@ export type Role = 'student' | 'instructor';
 export interface Profile {
   id: string;
   email: string;
+  username: string | null;
   role: Role;
   full_name: string | null;
   phone: string | null;

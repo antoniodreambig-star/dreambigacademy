@@ -12,7 +12,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   return (
     <div className="narrow">
       <h1 className="page-title">Your profile</h1>
-      <p className="sub">{profile.email}</p>
+      <p className="sub">
+        {profile.email} · username <strong>{profile.username}</strong> · <a href="/welcome?edit=1">Change username or password</a>
+      </p>
       {q.saved && <div className="notice notice--ok">Saved.</div>}
       {q.err && <div className="notice notice--err">{q.err === 'photo' ? 'That photo didn’t upload. Use an image under 5 MB.' : 'That didn’t save. Please try again.'}</div>}
 

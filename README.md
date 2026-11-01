@@ -2,7 +2,7 @@
 
 Student portal for the Dream Big Studios Audio Engineering Academy.
 
-**Students** sign in with an emailed link (no passwords) and get: a profile, the 26-week class plan, a schedule with homework due dates (turn in a note, link or file), private messages with the instructor, announcements, and a calendar link for their phone.
+**Students** sign in with an emailed link the first time, then choose a username and password (either works after that) and get: a profile, the 26-week class plan, a schedule with homework due dates (turn in a note, link or file), private messages with the instructor, announcements, and a calendar link for their phone.
 
 **Instructor** (you) gets: all students with who is behind or waiting on a reply, each student's profile and homework with feedback, cohorts (set one start date and every class and due date is calculated), enrollment by email, a curriculum editor, announcements.
 
@@ -13,6 +13,7 @@ Built with Next.js + Supabase. Cost: $0 to start.
 ## Set up (about 45 minutes, once)
 
 ### 1. Supabase (the database and logins)
+> After running `01_schema.sql` and `02_storage.sql`, also run `supabase/03_username_password.sql` (adds usernames). Existing accounts, including yours, will be asked to pick a username and password at next sign-in.
 1. Make a free account at supabase.com → **New project** (name it `dreambig-academy`, pick a region near Texas, save the database password).
 2. **SQL Editor → New query**: paste all of `supabase/01_schema.sql` → Run. Then paste `supabase/02_storage.sql` → Run.
 3. Open `01_schema.sql` first if you want to change who counts as an instructor (the two emails near the top). You can also change it later: `insert into instructors (email) values ('new@example.com');`

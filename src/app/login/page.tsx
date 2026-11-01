@@ -3,15 +3,30 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { passwordSignIn } from './actions';
 
 export default function Login() {
   const supabase = createClient();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [mode, setMode] = useState<'password' | 'link'>('password');
+  const [ident, setIdent] = useState('');
+  const [pw, setPw] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  async function signInPw(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    const res = await passwordSignIn(ident, pw);
+    setBusy(false);
+    if (res.error) return setError(res.error);
+    router.replace('/');
+    router.refresh();
+  }
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -50,10 +65,31 @@ export default function Login() {
         <div>
           <p className="eyebrow">Dream Big Studios</p>
           <h1 className="page-title">Academy sign in</h1>
-          <p className="muted">No password needed. We email you a sign-in link.</p>
+          <p className="muted">
+            {mode === 'password'
+              ? 'Sign in with your username and password.'
+              : 'We email you a sign-in link. First time here? Use this, then you’ll pick a username and password.'}
+          </p>
         </div>
         {error && <div className="notice notice--err" role="alert">{error}</div>}
-        {!sent ? (
+        {mode === 'password' ? (
+          <form onSubmit={signInPw} className="stack">
+            <div>
+              <label htmlFor="ident">Username or email</label>
+              <input id="ident" type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} value={ident} onChange={(e) => setIdent(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="pw">Password</label>
+              <input id="pw" type="password" required autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+            </div>
+            <button className="btn" disabled={busy} type="submit" style={{ width: '100%' }}>
+              {busy ? 'Signing in…' : 'Sign in'}
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setMode('link'); setError(''); }}>
+              First time, or forgot your password? Email me a link
+            </button>
+          </form>
+        ) : !sent ? (
           <form onSubmit={send} className="stack">
             <div>
               <label htmlFor="email">Your email</label>
@@ -61,6 +97,9 @@ export default function Login() {
             </div>
             <button className="btn" disabled={busy} type="submit" style={{ width: '100%' }}>
               {busy ? 'Sending…' : 'Email me a sign-in link'}
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setMode('password'); setError(''); }}>
+              Back to username &amp; password
             </button>
           </form>
         ) : (
