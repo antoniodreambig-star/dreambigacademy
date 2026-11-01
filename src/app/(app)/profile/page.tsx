@@ -13,7 +13,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     <div className="narrow">
       <h1 className="page-title">Your profile</h1>
       <p className="sub">
-        {profile.email} · username <strong>{profile.username}</strong> · <a href="/welcome?edit=1">Change username or password</a>
+        {profile.email} · username <strong>{profile.username}</strong> · <a href="/welcome?edit=1">Change username or password</a>{profile.role === 'student' && <> · <a href="/rules?view=1">Studio rules</a></>}
       </p>
       {q.saved && <div className="notice notice--ok">Saved.</div>}
       {q.err && <div className="notice notice--err">{q.err === 'photo' ? 'That photo didn’t save. Please try a different photo.' : 'That didn’t save. Please try again.'}</div>}

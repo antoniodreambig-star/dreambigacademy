@@ -20,7 +20,7 @@ a:hover { color: var(--coral-dark); }
 .top__in { display: flex; align-items: center; gap: 18px; min-height: 64px; }
 .brand { font-family: var(--display); font-stretch: 125%; font-weight: 850; font-size: 18px; color: #fff; text-decoration: none; white-space: nowrap; }
 .brand span { color: #ff8fab; }
-.nav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; align-items: center; }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: 0; align-items: center; }
 .nav a { color: rgba(255, 255, 255, 0.82); text-decoration: none; font-weight: 700; font-size: 15px; padding: 8px 12px; border-radius: 999px; position: relative; }
 .nav a:hover, .nav a[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: #fff; }
 .dot { display: inline-block; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: var(--coral); color: #fff; font-size: 12px; line-height: 18px; text-align: center; }
@@ -155,3 +155,9 @@ th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: v
 .foot a { color: #ff8fab; text-decoration: none; font-weight: 700; }
 .foot a:hover { color: #fff; }
 @media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:hover { transform: none; } }
+
+/* rules sign-off */
+.rules { margin: 0; padding-left: 22px; display: grid; gap: 10px; font-size: 15px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; font-size: 15px; margin: 0; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 2px 0 0; flex: none; }
+.avatar--sm { width: 36px; height: 36px; font-size: 13px; background: var(--lav-2); }

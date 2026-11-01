@@ -4,6 +4,11 @@ export interface Profile {
   id: string;
   email: string;
   username: string | null;
+  rules_version: string | null;
+  rules_accepted_at: string | null;
+  rules_signed_name: string | null;
+  under_18: boolean;
+  guardian_ack: boolean;
   role: Role;
   full_name: string | null;
   phone: string | null;

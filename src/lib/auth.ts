@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { Profile } from '@/lib/types';
+import { RULES_VERSION } from '@/lib/rules';
 
 /** Signed-in profile without forcing the username/password setup (used by /welcome itself). */
 export async function requireProfileRaw() {
@@ -18,6 +19,7 @@ export async function requireProfileRaw() {
 export async function requireProfile() {
   const ctx = await requireProfileRaw();
   if (!ctx.profile.username) redirect('/welcome');
+  if (ctx.profile.role === 'student' && ctx.profile.rules_version !== RULES_VERSION) redirect('/rules');
   return ctx;
 }
 

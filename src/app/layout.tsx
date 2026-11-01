@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import RegisterSW from '@/components/RegisterSW';
 
 export const metadata: Metadata = {
   title: { default: 'Dream Big Academy', template: '%s | Dream Big Academy' },
@@ -20,7 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100,800..900&family=Kumbh+Sans:wght@400;600;700;800&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <RegisterSW />
+      </body>
     </html>
   );
 }

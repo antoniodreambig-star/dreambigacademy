@@ -7,7 +7,8 @@ import AudioFeedback, { type FbComment } from '@/components/AudioFeedback';
 import type { Attendance, Cohort, Profile, Submission, SubmissionComment, Week } from '@/lib/types';
 
 const isAudio = (p: string | null) => !!p && /\.(mp3|wav|m4a|aac|ogg|oga|flac|aif|aiff)$/i.test(p);
-import { assignStudent, saveFeedback } from '../../actions';
+import { assignStudent, saveFeedback, saveNote } from '../../actions';
+import { RULES_VERSION } from '@/lib/rules';
 
 export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
   const { id } = await params;
@@ -16,11 +17,12 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
   const { data: p } = await supabase.from('profiles').select('*').eq('id', id).eq('role', 'student').single();
   if (!p) notFound();
   const profile = p as Profile;
-  const [{ data: cohorts }, { data: weeks }, { data: subs }, { data: attRows }] = await Promise.all([
+  const [{ data: cohorts }, { data: weeks }, { data: subs }, { data: attRows }, { data: noteRow }] = await Promise.all([
     supabase.from('cohorts').select('*').order('start_date', { ascending: false }),
     supabase.from('weeks').select('*').order('week'),
     supabase.from('submissions').select('*').eq('student_id', id),
     supabase.from('attendance').select('*').eq('student_id', id).order('week'),
+    supabase.from('instructor_notes').select('body').eq('student_id', id).maybeSingle(),
   ]);
   const C = (cohorts ?? []) as Cohort[];
   const cohort = C.find((c) => c.id === profile.cohort_id) ?? null;
@@ -83,6 +85,26 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
             <button className="btn btn--sm" type="submit">Save</button>
           </form>
         </section>
+      </div>
+
+      <h2 className="phase" id="notes">Private notes</h2>
+      <form action={saveNote} className="card stack">
+        <input type="hidden" name="student_id" value={profile.id} />
+        <p className="small muted" style={{ margin: 0 }}>Only you can see this. Students never do.</p>
+        <textarea name="body" defaultValue={(noteRow?.body as string) ?? ''} maxLength={5000} aria-label="Private notes" style={{ minHeight: 120 }} />
+        <button className="btn btn--sm" type="submit">Save notes</button>
+      </form>
+
+      <h2 className="phase">Studio rules</h2>
+      <div className="card">
+        {profile.rules_version === RULES_VERSION ? (
+          <p style={{ margin: 0 }}>
+            Signed by <strong>{profile.rules_signed_name}</strong> on {profile.rules_accepted_at ? new Date(profile.rules_accepted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}.
+            {profile.under_18 && <> Under 18: guardian {profile.guardian_ack ? 'agreed' : 'has NOT agreed'}.</>}
+          </p>
+        ) : (
+          <p style={{ margin: 0 }} className="muted">Not signed yet. They’ll be asked the next time they open the app.</p>
+        )}
       </div>
 
       <h2 className="phase">Attendance</h2>

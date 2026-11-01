@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireProfile } from '@/lib/auth';
 import Nav from '@/components/Nav';
 import SiteFooter from '@/components/SiteFooter';
+import Avatar from '@/components/Avatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="wrap top__in">
           <Link className="brand" href={isInstructor ? '/admin' : '/'}>
             Dream Big <span>Academy</span>
+          </Link>
+          <Link href="/profile" aria-label="Your profile" title="Your profile" style={{ marginLeft: 'auto', display: 'inline-flex' }}>
+            <Avatar name={profile.full_name} url={profile.avatar_url} small />
           </Link>
           <Nav items={items} />
         </div>

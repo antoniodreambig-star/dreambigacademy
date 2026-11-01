@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireInstructor } from '@/lib/auth';
 import { sendEmail, siteUrl } from '@/lib/email';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
 const none = (v: string) => (v === '' ? null : v);
@@ -85,9 +86,31 @@ export async function saveFeedback(f: FormData) {
   const { supabase } = await requireInstructor();
   const id = str(f, 'student_id', 40);
   const week = Number(f.get('week'));
-  await supabase.from('submissions').update({ feedback: none(str(f, 'feedback', 3000)) }).eq('student_id', id).eq('week', week);
+  const text = none(str(f, 'feedback', 3000));
+  const { data: before } = await supabase.from('submissions').select('feedback').eq('student_id', id).eq('week', week).single();
+  await supabase.from('submissions').update({ feedback: text }).eq('student_id', id).eq('week', week);
+  // Email the student when feedback is new or changed.
+  if (text && text !== (before?.feedback ?? null)) {
+    const admin = createAdminClient();
+    const { data: st } = admin ? await admin.from('profiles').select('email, full_name').eq('id', id).single() : { data: null };
+    if (st?.email) {
+      await sendEmail(
+        st.email as string,
+        `Feedback on your Week ${week} homework`,
+        `Hi ${((st.full_name as string) || '').split(' ')[0] || 'there'},\n\nYour instructor left feedback on your Week ${week} homework:\n\n${text}\n\nSee it here: ${siteUrl()}/schedule#w${week}`,
+      );
+    }
+  }
   revalidatePath(`/admin/students/${id}`);
   redirect(`/admin/students/${id}?ok=1#w${week}`);
+}
+
+export async function saveNote(f: FormData) {
+  const { supabase } = await requireInstructor();
+  const id = str(f, 'student_id', 40);
+  await supabase.from('instructor_notes').upsert({ student_id: id, body: str(f, 'body', 5000), updated_at: new Date().toISOString() }, { onConflict: 'student_id' });
+  revalidatePath(`/admin/students/${id}`);
+  redirect(`/admin/students/${id}?ok=1#notes`);
 }
 
 export async function saveWeek(f: FormData) {
