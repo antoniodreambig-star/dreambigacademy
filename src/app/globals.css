@@ -112,3 +112,20 @@ th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: v
 .login { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(70% 60% at 80% 0%, rgba(217,25,74,.35), transparent 60%), var(--plum); }
 .login .card { width: 100%; max-width: 440px; }
 .stat { font-family: var(--display); font-stretch: 125%; font-weight: 900; font-size: 2.2rem; line-height: 1; }
+
+/* audio feedback */
+.audiofb { margin: 10px 0 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.audiofb__list { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 8px; }
+.audiofb__list li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+.audiofb__list li > span:not(.audiofb__ts) { flex: 1; }
+.audiofb__ts { flex: none; min-width: 52px; text-align: center; padding: 2px 8px; border-radius: 999px; background: var(--lav-2); color: var(--plum); font-weight: 800; font-size: 13px; border: 0; cursor: pointer; font-family: inherit; }
+.audiofb__ts--none { cursor: default; background: var(--lav); color: var(--muted); }
+.audiofb__x { background: none; border: 0; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); padding: 0 4px; }
+.audiofb__form { margin-top: 8px; }
+
+/* attendance */
+.attrow { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.attrow:last-of-type { border-bottom: 0; }
+.attrow__opts { display: flex; gap: 8px 18px; flex-wrap: wrap; }
+.attrow__opt { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; margin: 0; cursor: pointer; }
+.attrow__opt input { width: 18px; height: 18px; margin: 0; }

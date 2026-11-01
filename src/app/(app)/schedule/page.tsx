@@ -1,8 +1,12 @@
 import { requireStudent } from '@/lib/auth';
 import { classDate, dueDate, fmtDate, fmtTime, hasHomework, hwState, todayLocal, type HwState } from '@/lib/schedule';
 import { siteUrl } from '@/lib/email';
-import type { Cohort, Project, Submission, Week } from '@/lib/types';
-import { submitHomework, undoHomework } from './actions';
+import type { Cohort, Project, Submission, SubmissionComment, Week } from '@/lib/types';
+import HomeworkForm from '@/components/HomeworkForm';
+import AudioFeedback, { type FbComment } from '@/components/AudioFeedback';
+import { undoHomework } from './actions';
+
+const isAudio = (p: string | null) => !!p && /\.(mp3|wav|m4a|aac|ogg|oga|flac|aif|aiff)$/i.test(p);
 
 export const metadata = { title: 'Schedule' };
 
@@ -38,6 +42,15 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
       const { data } = await supabase.storage.from('homework').createSignedUrl(s.file_path, 3600);
       if (data?.signedUrl) urls.set(s.file_path, data.signedUrl);
     }
+  }
+
+  const ids = [...S.values()].map((s) => s.id);
+  const { data: cmts } = ids.length ? await supabase.from('submission_comments').select('*').in('submission_id', ids).order('created_at') : { data: [] };
+  const comments = new Map<string, FbComment[]>();
+  for (const c of (cmts ?? []) as SubmissionComment[]) {
+    const list = comments.get(c.submission_id) ?? [];
+    list.push({ id: c.id, at_seconds: c.at_seconds, body: c.body, author_name: c.author_name || 'Someone', author_role: c.author_role, mine: c.author_id === profile.id });
+    comments.set(c.submission_id, list);
   }
 
   const items = W.filter(hasHomework).map((w) => ({ w, s: S.get(w.week), state: hwState(c, w, S.get(w.week), today), due: dueDate(c, w) }));
@@ -106,6 +119,9 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
                         {s.link && <><a href={s.link} target="_blank" rel="noopener noreferrer">Your link</a>{' '}</>}
                         {s.file_path && urls.get(s.file_path) && <a href={urls.get(s.file_path)} target="_blank" rel="noopener noreferrer">Your file</a>}
                       </p>
+                      {isAudio(s.file_path) && urls.get(s.file_path!) && (
+                        <AudioFeedback submissionId={s.id} src={urls.get(s.file_path!)!} comments={comments.get(s.id) ?? []} returnTo={`/schedule#w${w.week}`} isInstructor={false} />
+                      )}
                       {s.feedback && <div className="feedback"><strong>Feedback from your instructor:</strong><br />{s.feedback}</div>}
                       <form action={undoHomework} style={{ marginTop: 10 }}>
                         <input type="hidden" name="week" value={w.week} />
@@ -117,16 +133,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
                   ) : (
                     <details className="fold">
                       <summary>Turn it in</summary>
-                      <form action={submitHomework} className="stack" encType="multipart/form-data">
-                        <input type="hidden" name="week" value={w.week} />
-                        <div><label htmlFor={`n${w.week}`}>Note (optional)</label><textarea id={`n${w.week}`} name="note" /></div>
-                        <div className="row">
-                          <div><label htmlFor={`l${w.week}`}>Link (Drive, Dropbox…)</label><input id={`l${w.week}`} name="link" type="text" placeholder="https://" /></div>
-                          <div><label htmlFor={`f${w.week}`}>Or upload a file (up to 25 MB)</label><input id={`f${w.week}`} name="file" type="file" /></div>
-                        </div>
-                        <p className="small muted" style={{ margin: 0 }}>Large sessions and bounces: share a Drive or Dropbox link instead.</p>
-                        <button className="btn" type="submit">Mark as turned in</button>
-                      </form>
+                      <HomeworkForm week={w.week} userId={profile.id} />
                     </details>
                   )}
                 </article>

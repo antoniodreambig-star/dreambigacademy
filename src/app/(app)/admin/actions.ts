@@ -58,7 +58,7 @@ export async function addInvite(f: FormData) {
     await sendEmail(
       email,
       'You’re enrolled in the Dream Big Academy',
-      `Hi ${name || 'there'},\n\nYour spot in the Dream Big Studios Audio Engineering Academy is set up. Sign in with this email address (no password needed):\n\n${siteUrl()}/login\n\nYou'll see your class schedule, homework due dates and a way to message your instructor.`,
+      `Hi ${name || 'there'},\n\nYour spot in the Dream Big Studios Audio Engineering Academy is set up. Go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll then pick a username and password for future sign-ins:\n\n${siteUrl()}/login\n\nYou'll see your class schedule, homework due dates and a way to message your instructor.`,
     );
   }
   revalidatePath('/admin/cohorts');
@@ -132,4 +132,22 @@ export async function deleteAnnouncement(f: FormData) {
   await supabase.from('announcements').delete().eq('id', str(f, 'id', 40));
   revalidatePath('/', 'layout');
   redirect('/admin/announcements');
+}
+
+export async function saveAttendance(f: FormData) {
+  const { supabase } = await requireInstructor();
+  const cohort = str(f, 'cohort', 40);
+  const week = Number(f.get('week'));
+  if (!Number.isInteger(week) || week < 1 || week > 26) redirect('/admin/attendance');
+  const rows: { student_id: string; week: number; status: string; note: string | null; marked_at: string }[] = [];
+  for (const [key, val] of f.entries()) {
+    if (!key.startsWith('s_') || typeof val !== 'string') continue;
+    if (!['present', 'late', 'absent', 'excused'].includes(val)) continue;
+    const id = key.slice(2);
+    rows.push({ student_id: id, week, status: val, note: none(str(f, `n_${id}`, 200)), marked_at: new Date().toISOString() });
+  }
+  if (rows.length) await supabase.from('attendance').upsert(rows, { onConflict: 'student_id,week' });
+  revalidatePath('/admin/attendance');
+  revalidatePath('/classes');
+  redirect(`/admin/attendance?cohort=${encodeURIComponent(cohort)}&week=${week}&ok=1`);
 }

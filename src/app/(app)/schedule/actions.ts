@@ -14,14 +14,11 @@ export async function submitHomework(formData: FormData) {
 
   const row: Record<string, unknown> = { student_id: profile.id, week, note, link, submitted_at: new Date().toISOString() };
 
-  const file = formData.get('file');
-  if (file instanceof File && file.size > 0) {
-    if (file.size > 25 * 1024 * 1024) redirect(`/schedule?err=size#w${week}`);
-    const safe = file.name.replace(/[^A-Za-z0-9._-]/g, '_').slice(-80);
-    const path = `${profile.id}/week-${week}/${Date.now()}-${safe}`;
-    const { error } = await supabase.storage.from('homework').upload(path, file, { contentType: file.type || 'application/octet-stream' });
-    if (error) redirect(`/schedule?err=upload#w${week}`);
-    row.file_path = path;
+  // The browser uploads the file straight to storage; we only accept a path inside this student's own folder.
+  const filePath = String(formData.get('file_path') ?? '');
+  if (filePath) {
+    if (!filePath.startsWith(`${profile.id}/week-${week}/`) || filePath.includes('..')) redirect(`/schedule?err=upload#w${week}`);
+    row.file_path = filePath;
   }
 
   const { error } = await supabase.from('submissions').upsert(row, { onConflict: 'student_id,week' });

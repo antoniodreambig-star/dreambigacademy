@@ -19,6 +19,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ? [
         { href: '/admin', label: 'Students' },
         { href: '/admin/messages', label: 'Messages', badge: count ?? 0 },
+        { href: '/admin/attendance', label: 'Attendance' },
+        { href: '/resources', label: 'Resources' },
         { href: '/admin/cohorts', label: 'Cohorts' },
         { href: '/admin/curriculum', label: 'Curriculum' },
         { href: '/admin/announcements', label: 'Announcements' },
@@ -28,6 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/', label: 'Home' },
         { href: '/classes', label: 'Classes' },
         { href: '/schedule', label: 'Schedule' },
+        { href: '/resources', label: 'Resources' },
         { href: '/messages', label: 'Messages', badge: count ?? 0 },
         { href: '/profile', label: 'Profile' },
       ];

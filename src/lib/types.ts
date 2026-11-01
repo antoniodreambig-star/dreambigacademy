@@ -75,3 +75,33 @@ export interface Announcement {
   body: string;
   created_at: string;
 }
+
+export interface SubmissionComment {
+  id: string;
+  submission_id: string;
+  author_id: string;
+  author_name: string;
+  author_role: string;
+  at_seconds: number | null;
+  body: string;
+  created_at: string;
+}
+
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'excused';
+
+export interface Attendance {
+  student_id: string;
+  week: number;
+  status: AttendanceStatus;
+  note: string | null;
+}
+
+export interface Resource {
+  id: string;
+  week: number | null;
+  title: string;
+  description: string | null;
+  url: string | null;
+  file_path: string | null;
+  created_at: string;
+}

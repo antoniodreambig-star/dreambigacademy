@@ -13,7 +13,7 @@ Built with Next.js + Supabase. Cost: $0 to start.
 ## Set up (about 45 minutes, once)
 
 ### 1. Supabase (the database and logins)
-> After running `01_schema.sql` and `02_storage.sql`, also run `supabase/03_username_password.sql` (adds usernames). Existing accounts, including yours, will be asked to pick a username and password at next sign-in.
+> After running `01_schema.sql` and `02_storage.sql`, also run `supabase/03_username_password.sql` (adds usernames) and `supabase/04_audio_attendance_resources.sql` (audio feedback, attendance, resource library). Existing accounts, including yours, will be asked to pick a username and password at next sign-in.
 1. Make a free account at supabase.com → **New project** (name it `dreambig-academy`, pick a region near Texas, save the database password).
 2. **SQL Editor → New query**: paste all of `supabase/01_schema.sql` → Run. Then paste `supabase/02_storage.sql` → Run.
 3. Open `01_schema.sql` first if you want to change who counts as an instructor (the two emails near the top). You can also change it later: `insert into instructors (email) values ('new@example.com');`
@@ -53,6 +53,11 @@ Students who aren't on your list can't create an account. Removing a person from
 - Homework is due `homework_due_days` after that week's class (7 = next class; weeks 4 and 9 use 0 because the projects are due at class).
 - Change the cohort's start date and everyone's schedule and calendar update.
 - A daily job (Vercel cron, 9am Central) emails students homework due today or tomorrow and class the next day.
+
+## Audio feedback, attendance and resources
+- **Audio feedback:** when a student turns in an MP3/M4A/WAV file, a player appears for them and for you. Pause the song, tap "Pin comment to current time", write the note, and it shows as a clickable timestamp. Both sides can comment. Files upload straight from the browser (up to 50 MB); export mixes as MP3 or M4A to stay under that.
+- **Attendance:** Instructor → Attendance. Pick the cohort and week, mark each student, save. Students see a chip on each week in Classes; you see totals on each student's page.
+- **Resources:** Resources page. You add links or upload files (whole course or a specific week); students see them read-only.
 
 ## Messages
 One private thread per student. New messages appear live. Each message also emails the other person (needs Resend).
