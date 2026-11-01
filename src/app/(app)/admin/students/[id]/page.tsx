@@ -70,7 +70,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
           <form action={assignStudent} className="stack" style={{ marginTop: 12 }}>
             <input type="hidden" name="id" value={profile.id} />
             <div>
-              <label htmlFor="cohort_id">Cohort</label>
+              <label htmlFor="cohort_id">Class</label>
               <select id="cohort_id" name="cohort_id" defaultValue={profile.cohort_id ?? ''}>
                 <option value="">None</option>
                 {C.map((c) => <option key={c.id} value={c.id}>{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
@@ -95,7 +95,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
       </div>
 
       <h2 className="phase">Homework</h2>
-      {!cohort && <div className="card"><p className="muted">Place this student in a cohort to see their due dates.</p></div>}
+      {!cohort && <div className="card"><p className="muted">Place this student in a class to see their due dates.</p></div>}
       {cohort && ((weeks ?? []) as Week[]).filter(hasHomework).map((w) => {
         const s = S.get(w.week);
         const state = hwState(cohort, w, s, today);

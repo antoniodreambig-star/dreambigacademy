@@ -18,7 +18,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
   const { data: cohorts } = await supabase.from('cohorts').select('*').order('start_date', { ascending: false });
   const C = (cohorts ?? []) as Cohort[];
   if (C.length === 0) {
-    return (<><h1 className="page-title">Attendance</h1><div className="card"><p>Create a cohort first (Cohorts page), then come back to take attendance.</p></div></>);
+    return (<><h1 className="page-title">Attendance</h1><div className="card"><p>Create a class first (Classes page), then come back to take attendance.</p></div></>);
   }
   const cohort = C.find((c) => c.id === q.cohort) ?? C.find((c) => c.active) ?? C[0];
   const guess = Math.min(26, Math.max(1, currentWeek(cohort, todayLocal())));
@@ -39,7 +39,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
 
       <form method="get" className="card" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', marginBottom: 16 }}>
         <div>
-          <label htmlFor="cohort">Cohort</label>
+          <label htmlFor="cohort">Class</label>
           <select id="cohort" name="cohort" defaultValue={cohort.id}>{C.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
         </div>
         <div>
@@ -50,7 +50,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       </form>
 
       {S.length === 0 ? (
-        <div className="card"><p className="muted">No students are in this cohort yet.</p></div>
+        <div className="card"><p className="muted">No students are in this class yet.</p></div>
       ) : (
         <form action={saveAttendance} className="card stack">
           <input type="hidden" name="cohort" value={cohort.id} />

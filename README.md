@@ -4,7 +4,7 @@ Student portal for the Dream Big Studios Audio Engineering Academy.
 
 **Students** sign in with an emailed link the first time, then choose a username and password (either works after that) and get: a profile, the 26-week class plan, a schedule with homework due dates (turn in a note, link or file), private messages with the instructor, announcements, and a calendar link for their phone.
 
-**Instructor** (you) gets: all students with who is behind or waiting on a reply, each student's profile and homework with feedback, cohorts (set one start date and every class and due date is calculated), enrollment by email, a curriculum editor, announcements.
+**Instructor** (you) gets: all students with who is behind or waiting on a reply, each student's profile and homework with feedback, classes (set one start date and every class and due date is calculated), enrollment by email, a curriculum editor, announcements.
 
 Built with Next.js + Supabase. Cost: $0 to start.
 
@@ -43,20 +43,20 @@ Built with Next.js + Supabase. Cost: $0 to start.
 
 ### 4. First sign-in
 1. Go to app.dreambigctx.com and enter your email (it must be in the instructors list). You land on the Students page.
-2. **Cohorts**: create one (name, Week 1 class date, start time). Add each student's email. They sign in with that email.
+2. **Classes**: create one (name, Week 1 class date, start time). Add each student's email. They sign in with that email.
 3. **Curriculum**: weeks 1–9 are loaded from your course plan. Weeks 10–26 say "Outline coming soon" until you fill them in.
 
-Students who aren't on your list can't create an account. Removing a person from Cohorts only removes the invite; to remove an account, delete the user in Supabase → Authentication.
+Students who aren't on your list can't create an account. Removing a person from Classes only removes the invite; to remove an account, delete the user in Supabase → Authentication.
 
 ## How the schedule works
 - Class date for week N = Week 1 date + (N−1) × 7 days.
 - Homework is due `homework_due_days` after that week's class (7 = next class; weeks 4 and 9 use 0 because the projects are due at class).
-- Change the cohort's start date and everyone's schedule and calendar update.
+- Change the class's start date and everyone's schedule and calendar update.
 - A daily job (Vercel cron, 9am Central) emails students homework due today or tomorrow and class the next day.
 
 ## Audio feedback, attendance and resources
 - **Audio feedback:** when a student turns in an MP3/M4A/WAV file, a player appears for them and for you. Pause the song, tap "Pin comment to current time", write the note, and it shows as a clickable timestamp. Both sides can comment. Files upload straight from the browser (up to 50 MB); export mixes as MP3 or M4A to stay under that.
-- **Attendance:** Instructor → Attendance. Pick the cohort and week, mark each student, save. Students see a chip on each week in Classes; you see totals on each student's page.
+- **Attendance:** Instructor → Attendance. Pick the class and week, mark each student, save. Students see a chip on each week in Classes; you see totals on each student's page.
 - **Resources:** Resources page. You add links or upload files (whole course or a specific week); students see them read-only.
 
 ## Messages

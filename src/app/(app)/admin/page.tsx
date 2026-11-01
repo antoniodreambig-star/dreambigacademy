@@ -32,7 +32,7 @@ export default async function Admin() {
         <table>
           <thead><tr><th>Student</th><th>Homework in</th><th>Overdue</th><th>Last turned in</th><th>Unread</th></tr></thead>
           <tbody>
-            {list.length === 0 && <tr><td colSpan={5} className="muted">No students yet. Add them under Cohorts.</td></tr>}
+            {list.length === 0 && <tr><td colSpan={5} className="muted">No students yet. Add them under Classes.</td></tr>}
             {list.map((p) => {
               const mine = S.filter((s) => s.student_id === p.id);
               const byWeek = new Map(mine.map((s) => [s.week, s]));
@@ -65,7 +65,7 @@ export default async function Admin() {
       <h1 className="page-title">Students</h1>
       <p className="sub">Who’s on track, who’s behind, and who’s waiting on a reply.</p>
       {C.length === 0 && (
-        <div className="card"><p>No cohort yet. <Link href="/admin/cohorts">Create your first cohort</Link> to set the start date and add students.</p></div>
+        <div className="card"><p>No class yet. <Link href="/admin/cohorts">Create your first class</Link> to set the start date and add students.</p></div>
       )}
       {C.map((c) => {
         const list = P.filter((p) => p.cohort_id === c.id);
@@ -80,7 +80,7 @@ export default async function Admin() {
       })}
       {unplaced.length > 0 && (
         <section className="card">
-          <p className="eyebrow">Not in a cohort</p>
+          <p className="eyebrow">Not in a class</p>
           <Table cohort={null} list={unplaced} />
         </section>
       )}

@@ -19,7 +19,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
     return (
       <>
         <h1 className="page-title">Schedule</h1>
-        <div className="card"><p>Your instructor hasn’t placed you in a cohort yet. Your classes and due dates will appear here.</p></div>
+        <div className="card"><p>Your instructor hasn’t placed you in a class yet. Your classes and due dates will appear here.</p></div>
       </>
     );
   }

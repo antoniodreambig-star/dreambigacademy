@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/messages', label: 'Messages', badge: count ?? 0 },
         { href: '/admin/attendance', label: 'Attendance' },
         { href: '/resources', label: 'Resources' },
-        { href: '/admin/cohorts', label: 'Cohorts' },
+        { href: '/admin/cohorts', label: 'Classes' },
         { href: '/admin/curriculum', label: 'Curriculum' },
         { href: '/admin/announcements', label: 'Announcements' },
         { href: '/profile', label: 'Profile' },

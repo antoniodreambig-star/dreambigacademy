@@ -16,7 +16,7 @@ export default async function Home() {
       <>
         <h1 className="page-title">Welcome, {first}</h1>
         <div className="card">
-          <p>You’re signed in, but you haven’t been placed in a class yet. Your instructor will add you to a cohort and your schedule will show up here.</p>
+          <p>You’re signed in, but you haven’t been placed in a class yet. Your instructor will add you to a class and your schedule will show up here.</p>
         </div>
       </>
     );

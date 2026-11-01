@@ -3,7 +3,7 @@ import { classDate, fmtDate } from '@/lib/schedule';
 import type { Cohort } from '@/lib/types';
 import { addInvite, createCohort, removeInvite, updateCohort } from '../actions';
 
-export const metadata = { title: 'Cohorts' };
+export const metadata = { title: 'Classes' };
 
 export default async function Cohorts({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
   const { supabase } = await requireInstructor();
@@ -19,13 +19,13 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <h1 className="page-title">Cohorts and enrollment</h1>
+      <h1 className="page-title">Classes and enrollment</h1>
       <p className="sub">Set a start date and every class, lab and due date is figured out for you. Only emails you add here can create an account.</p>
       {q.ok && <div className="notice notice--ok">Saved.</div>}
       {q.err && <div className="notice notice--err">{q.err === 'email' ? 'Enter a valid email address.' : 'Check the name and start date and try again.'}</div>}
 
       <section className="card stack">
-        <h2>New cohort</h2>
+        <h2>New class</h2>
         <form action={createCohort} className="stack">
           <div className="row">
             <div><label htmlFor="cn">Name</label><input id="cn" name="name" type="text" placeholder="Spring 2027" required /></div>
@@ -36,7 +36,7 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
             <div><label htmlFor="ch">Class length (hours)</label><input id="ch" name="class_hours" type="number" step="0.5" min="1" max="8" defaultValue="3" /></div>
           </div>
           <p className="small muted" style={{ margin: 0 }}>Classes repeat on the same weekday for 26 weeks.</p>
-          <button className="btn" type="submit">Create cohort</button>
+          <button className="btn" type="submit">Create class</button>
         </form>
       </section>
 
@@ -72,7 +72,7 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
             <div><label htmlFor="in">Name</label><input id="in" name="full_name" type="text" /></div>
           </div>
           <div>
-            <label htmlFor="ic">Cohort</label>
+            <label htmlFor="ic">Class</label>
             <select id="ic" name="cohort_id" defaultValue={C[0]?.id ?? ''}>
               <option value="">None yet</option>
               {C.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -86,7 +86,7 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
 
         <div className="tablewrap">
           <table>
-            <thead><tr><th>Email</th><th>Name</th><th>Cohort</th><th>Status</th><th /></tr></thead>
+            <thead><tr><th>Email</th><th>Name</th><th>Class</th><th>Status</th><th /></tr></thead>
             <tbody>
               {(invites ?? []).length === 0 && <tr><td colSpan={5} className="muted">No one added yet.</td></tr>}
               {(invites ?? []).map((i) => (
