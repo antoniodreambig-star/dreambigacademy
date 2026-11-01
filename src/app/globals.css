@@ -3,7 +3,7 @@
   --muted: #6a5c7a; --line: rgba(30, 15, 51, 0.12); --coral: #d9194a; --coral-dark: #b8123d; --blue: #4a7dff;
   --green: #1f9d5b; --amber: #b7791f;
   --display: "Archivo", "Arial Black", sans-serif; --body: "Kumbh Sans", "Avenir Next", "Segoe UI", sans-serif;
-  --r-lg: 24px; --r: 16px; --r-sm: 12px;
+  --r-lg: 28px; --ease: cubic-bezier(0.2, 0.7, 0.2, 1); --r: 16px; --r-sm: 12px;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--lav); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
@@ -109,7 +109,19 @@ th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--li
 th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: var(--lav-2); display: inline-grid; place-items: center; font-weight: 800; color: var(--plum); }
 .avatar--lg { width: 96px; height: 96px; font-size: 32px; }
-.login { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(70% 60% at 80% 0%, rgba(217,25,74,.35), transparent 60%), var(--plum); }
+.login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); background: var(--plum); }
+.login__hero { position: relative; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; padding: clamp(28px, 5vw, 64px);
+  background: linear-gradient(180deg, rgba(30,15,51,.25) 0%, rgba(30,15,51,.92) 100%), radial-gradient(70% 60% at 15% 0%, rgba(74,125,255,.35), transparent 60%), url(/hero.jpg) center / cover no-repeat; }
+.login__hero h2 { font-size: clamp(2.1rem, 4.6vw, 3.8rem); font-weight: 850; font-stretch: 125%; line-height: .98; letter-spacing: -.025em; max-width: 13ch; text-wrap: balance; }
+.login__sub { max-width: 42ch; margin: 0; color: rgba(255,255,255,.85); font-size: 17px; }
+.login__back { color: rgba(255,255,255,.75); font-weight: 700; font-size: 14px; text-decoration: none; }
+.login__back:hover { color: #fff; }
+.login__panel { display: grid; place-items: center; padding: 24px; background: radial-gradient(70% 60% at 85% 0%, rgba(217,25,74,.35), transparent 60%), var(--plum); }
+@media (max-width: 860px) {
+  .login { grid-template-columns: 1fr; }
+  .login__hero { min-height: 260px; justify-content: flex-end; padding: 28px 20px; }
+  .login__sub { display: none; }
+}
 .login .card { width: 100%; max-width: 440px; }
 .stat { font-family: var(--display); font-stretch: 125%; font-weight: 900; font-size: 2.2rem; line-height: 1; }
 
@@ -129,3 +141,17 @@ th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: v
 .attrow__opts { display: flex; gap: 8px 18px; flex-wrap: wrap; }
 .attrow__opt { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; margin: 0; cursor: pointer; }
 .attrow__opt input { width: 18px; height: 18px; margin: 0; }
+
+/* website-style polish */
+.btn { transition: background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease); }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(30, 15, 51, .18); }
+.btn:active { transform: translateY(0); }
+.top { backdrop-filter: saturate(1.2) blur(8px); }
+.card--photo { background: linear-gradient(90deg, rgba(30,15,51,.96) 28%, rgba(30,15,51,.55) 100%), radial-gradient(90% 140% at 100% 0%, rgba(74,125,255,.3), transparent 60%), url(/hero.jpg) center / cover no-repeat; }
+.foot { background: var(--plum); color: rgba(255,255,255,.8); padding: 28px 0; font-size: 14px; }
+.foot__in { display: flex; gap: 20px 40px; justify-content: space-between; flex-wrap: wrap; }
+.foot strong { color: #fff; font-family: var(--display); font-stretch: 118%; }
+.foot__links { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.foot a { color: #ff8fab; text-decoration: none; font-weight: 700; }
+.foot a:hover { color: #fff; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:hover { transform: none; } }

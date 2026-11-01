@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { requireProfileRaw } from '@/lib/auth';
 import { saveCredentials } from './actions';
+import AuthShell from '@/components/AuthShell';
 
 export const metadata = { title: 'Create your login' };
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,7 @@ export default async function Welcome({ searchParams }: { searchParams: Promise<
   if (profile.username && !edit) redirect('/');
 
   return (
-    <div className="login">
+    <AuthShell>
       <div className="card stack">
         <div>
           <p className="eyebrow">Dream Big Studios</p>
@@ -53,6 +54,6 @@ export default async function Welcome({ searchParams }: { searchParams: Promise<
           <button className="btn" type="submit" style={{ width: '100%' }}>{edit ? 'Save' : 'Save and continue'}</button>
         </form>
       </div>
-    </div>
+    </AuthShell>
   );
 }

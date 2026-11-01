@@ -7,7 +7,7 @@
 -- Emails that get the INSTRUCTOR role the first time they sign in. Edit this list.
 create table if not exists public.instructors (email text primary key check (email = lower(email)));
 insert into public.instructors (email) values
-  ('antoniodream@gmail.com'),
+  ('noriegaa1987@gmail.com'),
   ('studio@dreambigctx.com')
 on conflict do nothing;
 

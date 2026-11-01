@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { passwordSignIn } from './actions';
+import AuthShell from '@/components/AuthShell';
 
 export default function Login() {
   const supabase = createClient();
@@ -60,7 +61,7 @@ export default function Login() {
   }
 
   return (
-    <div className="login">
+    <AuthShell>
       <div className="card stack">
         <div>
           <p className="eyebrow">Dream Big Studios</p>
@@ -118,6 +119,6 @@ export default function Login() {
           </form>
         )}
       </div>
-    </div>
+    </AuthShell>
   );
 }

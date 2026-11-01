@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: { default: 'Dream Big Academy', template: '%s | Dream Big Academy' },
   description: 'Student portal for the Dream Big Studios Audio Engineering Academy.',
   robots: { index: false, follow: false },
+  appleWebApp: { title: 'Dream Big Academy', statusBarStyle: 'black-translucent' },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#1e0f33' };
 

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireProfile } from '@/lib/auth';
 import Nav from '@/components/Nav';
+import SiteFooter from '@/components/SiteFooter';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main>
         <div className="wrap">{children}</div>
       </main>
+      <SiteFooter />
     </>
   );
 }

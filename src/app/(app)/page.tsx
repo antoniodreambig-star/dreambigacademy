@@ -52,7 +52,7 @@ export default async function Home() {
       </p>
 
       <div className="grid grid--2">
-        <section className="card card--dark">
+        <section className="card card--dark card--photo">
           <p className="eyebrow">Next class</p>
           {nextClass ? (
             <>
