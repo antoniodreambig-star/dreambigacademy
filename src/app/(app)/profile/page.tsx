@@ -1,5 +1,5 @@
 import { requireProfile } from '@/lib/auth';
-import Avatar from '@/components/Avatar';
+import AvatarField from '@/components/AvatarField';
 import { saveProfile } from './actions';
 
 export const metadata = { title: 'Profile' };
@@ -16,16 +16,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         {profile.email} · username <strong>{profile.username}</strong> · <a href="/welcome?edit=1">Change username or password</a>
       </p>
       {q.saved && <div className="notice notice--ok">Saved.</div>}
-      {q.err && <div className="notice notice--err">{q.err === 'photo' ? 'That photo didn’t upload. Use an image under 5 MB.' : 'That didn’t save. Please try again.'}</div>}
+      {q.err && <div className="notice notice--err">{q.err === 'photo' ? 'That photo didn’t save. Please try a different photo.' : 'That didn’t save. Please try again.'}</div>}
 
-      <form action={saveProfile} className="card stack" encType="multipart/form-data">
-        <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Avatar name={profile.full_name} url={profile.avatar_url} large />
-          <div>
-            <label htmlFor="avatar">Profile photo</label>
-            <input id="avatar" name="avatar" type="file" accept="image/*" />
-          </div>
-        </div>
+      <form action={saveProfile} className="card stack">
+        <AvatarField userId={profile.id} name={profile.full_name} url={profile.avatar_url} />
         <div className="row">
           <div><label htmlFor="full_name">Full name</label><input id="full_name" name="full_name" type="text" defaultValue={profile.full_name ?? ''} required /></div>
           <div><label htmlFor="phone">Phone</label><input id="phone" name="phone" type="tel" defaultValue={profile.phone ?? ''} /></div>

@@ -22,14 +22,11 @@ export async function saveProfile(formData: FormData) {
     parent_email: s(formData, 'parent_email'),
   };
 
-  const file = formData.get('avatar');
-  if (file instanceof File && file.size > 0) {
-    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) redirect('/profile?err=photo');
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
-    const path = `${profile.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { contentType: file.type, upsert: true });
-    if (error) redirect('/profile?err=photo');
-    patch.avatar_url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  // The browser already resized and uploaded the photo; accept only a path inside this user's own folder.
+  const avatarPath = String(formData.get('avatar_path') ?? '');
+  if (avatarPath) {
+    if (!avatarPath.startsWith(`${profile.id}/`) || avatarPath.includes('..')) redirect('/profile?err=photo');
+    patch.avatar_url = supabase.storage.from('avatars').getPublicUrl(avatarPath).data.publicUrl;
   }
 
   const { error } = await supabase.from('profiles').update(patch).eq('id', profile.id);
