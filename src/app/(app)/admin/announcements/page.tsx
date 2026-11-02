@@ -4,7 +4,7 @@ import { deleteAnnouncement, postAnnouncement } from '../actions';
 
 export const metadata = { title: 'Announcements' };
 
-export default async function Announcements({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
+export default async function Announcements({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string; sent?: string; of?: string; mail?: string }> }) {
   const { supabase } = await requireInstructor();
   const q = await searchParams;
   const [{ data: anns }, { data: cohorts }] = await Promise.all([
@@ -17,7 +17,9 @@ export default async function Announcements({ searchParams }: { searchParams: Pr
     <div className="narrow">
       <h1 className="page-title">Announcements</h1>
       <p className="sub">Show up on students’ Home page. You can email them too.</p>
-      {q.ok && <div className="notice notice--ok">Posted.</div>}
+      {q.ok && <div className="notice notice--ok">Posted.{q.sent !== undefined && ` Emailed ${q.sent} of ${q.of} students (and a copy to you).`}</div>}
+      {q.mail === 'off' && <div className="notice notice--err">The announcement is posted in the app, but emails are not set up yet, so nothing was emailed. Add RESEND_API_KEY and EMAIL_FROM in Vercel.</div>}
+      {q.sent !== undefined && q.sent !== q.of && <div className="notice notice--err">Some emails didn’t send. Check that your sending domain is verified in Resend.</div>}
       {q.err && <div className="notice notice--err">Add a title and a message.</div>}
       <form action={postAnnouncement} className="card stack">
         <div><label htmlFor="at">Title</label><input id="at" name="title" type="text" required /></div>
