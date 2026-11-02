@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireInstructor } from '@/lib/auth';
-import { sendEmail, siteUrl } from '@/lib/email';
+import { emailConfigured, sendEmail, sendEmailEach, siteUrl } from '@/lib/email';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
@@ -134,20 +134,28 @@ export async function saveWeek(f: FormData) {
 }
 
 export async function postAnnouncement(f: FormData) {
-  const { supabase } = await requireInstructor();
+  const { supabase, profile } = await requireInstructor();
   const title = str(f, 'title', 140);
   const body = str(f, 'body', 4000);
   if (!title || !body) redirect('/admin/announcements?err=1');
   const cohort = none(str(f, 'cohort_id', 40));
   await supabase.from('announcements').insert({ title, body, cohort_id: cohort });
+  let mail = '';
   if (f.get('notify') === '1') {
-    const q = supabase.from('profiles').select('email').eq('role', 'student');
-    const { data } = await (cohort ? q.eq('cohort_id', cohort) : q);
-    const to = (data ?? []).map((p) => p.email as string);
-    if (to.length) await sendEmail(to, `Academy: ${title}`, body);
+    if (!emailConfigured()) {
+      mail = '&mail=off';
+    } else {
+      const q = supabase.from('profiles').select('email').eq('role', 'student');
+      const { data } = await (cohort ? q.eq('cohort_id', cohort) : q);
+      const to = (data ?? []).map((p) => p.email as string);
+      const sent = await sendEmailEach(to, `Academy: ${title}`, body);
+      // A copy for you, so you can see exactly what students received.
+      await sendEmail(profile.email, `Academy: ${title} (copy of what students received)`, body);
+      mail = `&sent=${sent}&of=${to.length}`;
+    }
   }
   revalidatePath('/', 'layout');
-  redirect('/admin/announcements?ok=1');
+  redirect(`/admin/announcements?ok=1${mail}`);
 }
 
 export async function deleteAnnouncement(f: FormData) {
