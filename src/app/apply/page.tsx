@@ -5,7 +5,19 @@ import { MONTHLY_CENTS, MONTHLY_COUNT, TUITION_CENTS, money } from '@/lib/pricin
 import type { Cohort } from '@/lib/types';
 import { submitApplication } from './actions';
 
-export const metadata = { title: 'Apply · Dream Big Academy' };
+export const metadata = {
+  title: 'Apply · Dream Big Academy',
+  description: 'Apply to the Dream Big Studios Audio Engineering Academy: six months of in-person recording, mixing and mastering in Pro Tools. Ages 16+.',
+  // The card people see when the apply link is shared. Image: public/share-apply.png.
+  openGraph: {
+    type: 'website',
+    siteName: 'Dream Big Academy',
+    title: 'Apply to the Dream Big Academy',
+    description: 'Six months of in-person recording, mixing and mastering in Pro Tools at Dream Big Studios in Killeen, TX. Ages 16+.',
+    images: [{ url: '/share-apply.png', width: 1200, height: 630, alt: 'Apply to the Dream Big Academy' }],
+  },
+  twitter: { card: 'summary_large_image' as const, title: 'Apply to the Dream Big Academy', description: 'Six months of in-person recording, mixing and mastering in Pro Tools. Ages 16+.', images: ['/share-apply.png'] },
+};
 export const dynamic = 'force-dynamic';
 
 const ERR: Record<string, string> = {
