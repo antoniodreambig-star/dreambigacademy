@@ -110,3 +110,68 @@ export interface Resource {
   file_path: string | null;
   created_at: string;
 }
+
+export type PlanKey = 'full' | 'monthly';
+
+export interface Enrollment {
+  student_id: string;
+  plan: PlanKey;
+  total_cents: number;
+  installments: number;
+  first_due: string; // YYYY-MM-DD
+  note: string | null;
+}
+
+export interface Payment {
+  id: string;
+  student_id: string;
+  amount_cents: number;
+  paid_on: string; // YYYY-MM-DD
+  method: string;
+  note: string | null;
+  created_at: string;
+}
+
+export type ApplicationStatus = 'new' | 'accepted' | 'waitlist' | 'declined';
+
+export interface Application {
+  id: string;
+  created_at: string;
+  status: ApplicationStatus;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  birth_date: string;
+  under_18: boolean;
+  guardian_name: string | null;
+  guardian_email: string | null;
+  guardian_phone: string | null;
+  experience: string | null;
+  goals: string | null;
+  referral: string | null;
+  plan: PlanKey | null;
+  cohort_id: string | null;
+  decided_at: string | null;
+  decision_note: string | null;
+}
+
+export interface GuardianConsent {
+  id: string;
+  token: string;
+  application_id: string | null;
+  student_email: string;
+  student_name: string;
+  guardian_name: string;
+  guardian_email: string | null;
+  status: 'pending' | 'signed';
+  requested_at: string;
+  last_sent_at: string | null;
+  signed_name: string | null;
+  relationship: string | null;
+  phone: string | null;
+  emergency_name: string | null;
+  emergency_phone: string | null;
+  media_ok: boolean;
+  version: string | null;
+  signed_at: string | null;
+}

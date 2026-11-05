@@ -17,11 +17,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .is('read_at', null)
     .neq('sender_id', profile.id);
 
+  // New applications waiting for a decision (instructor only).
+  let newApps = 0;
+  if (isInstructor) {
+    const { count: n } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('status', 'new');
+    newApps = n ?? 0;
+  }
+
   const items = isInstructor
     ? [
         { href: '/admin', label: 'Students' },
+        { href: '/admin/applications', label: 'Applications', badge: newApps },
         { href: '/admin/messages', label: 'Messages', badge: count ?? 0 },
         { href: '/admin/attendance', label: 'Attendance' },
+        { href: '/admin/payments', label: 'Payments' },
         { href: '/resources', label: 'Resources' },
         { href: '/admin/cohorts', label: 'Classes' },
         { href: '/admin/curriculum', label: 'Curriculum' },
@@ -33,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/classes', label: 'Classes' },
         { href: '/schedule', label: 'Schedule' },
         { href: '/resources', label: 'Resources' },
+        { href: '/tuition', label: 'Tuition' },
         { href: '/messages', label: 'Messages', badge: count ?? 0 },
         { href: '/profile', label: 'Profile' },
       ];
@@ -51,7 +61,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <main>
-        <div className="wrap">{children}</div>
+        <div className="wrap">
+          {!isInstructor && profile.under_18 && !profile.consent_signed && (
+            <div className="notice notice--err" role="status">
+              Your parent or guardian still needs to sign the consent form before you can take part. Ask your instructor to resend the link.
+            </div>
+          )}
+          {children}
+        </div>
       </main>
       <SiteFooter />
     </>

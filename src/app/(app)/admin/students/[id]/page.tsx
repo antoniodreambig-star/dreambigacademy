@@ -9,8 +9,9 @@ import type { Attendance, Cohort, Profile, Submission, SubmissionComment, Week }
 const isAudio = (p: string | null) => !!p && /\.(mp3|wav|m4a|aac|ogg|oga|flac|aif|aiff)$/i.test(p);
 import { assignStudent, saveFeedback, saveNote } from '../../actions';
 import { RULES_VERSION } from '@/lib/rules';
+import { ConsentPanel, TuitionPanel } from './panels';
 
-export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
+export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; mail?: string; err?: string }> }) {
   const { id } = await params;
   const q = await searchParams;
   const { supabase, profile: me } = await requireInstructor();
@@ -106,6 +107,10 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
           <p style={{ margin: 0 }} className="muted">Not signed yet. They’ll be asked the next time they open the app.</p>
         )}
       </div>
+
+      {q.err && <div className="notice notice--err">That didn’t save. Check the details and try again.</div>}
+      <TuitionPanel supabase={supabase} student={profile} cohort={cohort} today={today} />
+      <ConsentPanel supabase={supabase} student={profile} mailOff={q.mail === 'off'} />
 
       <h2 className="phase">Attendance</h2>
       <div className="card">

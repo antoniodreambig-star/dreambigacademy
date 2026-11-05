@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC = ['/login', '/auth', '/api/calendar', '/api/cron'];
+const PUBLIC = ['/login', '/auth', '/api/calendar', '/api/cron', '/apply', '/consent'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

@@ -77,3 +77,22 @@ npm run dev                  # http://localhost:3000
 - `src/app/(app)/`: the screens (student pages; `admin/` for the instructor)
 - `src/app/api/calendar/[token]`: calendar feed; `src/app/api/cron/reminders`: daily reminders
 - `src/lib/schedule.ts`: all the date math
+
+---
+
+## Tuition, applications and guardian consent (added Nov 2026)
+
+**Apply flow.** Public form at `/apply` (no sign-in). Applicants must be 16+; under-18s must give a parent/guardian name and email. New applications show up under **Applications** (badge in the menu) and you get an email alert. **Accept** adds them to your invite list with their class and payment plan, and emails them how to sign in. **Waitlist** and **Decline** can send a message too.
+
+**Guardian consent.** For applicants under 18, accepting emails the guardian a private link (`/consent/<secret>`). They read the studio rules and terms, tick the boxes, type their name as a signature, and give a phone number and an emergency contact. It is stored with the date, the wording version and the guardian's details, and the student's "Parent consent signed" switch turns on by itself. You can see status, copy the link to text it, or resend it under **Guardian consent** on each student's page. Under-18 students who haven't been consented see a reminder banner. The wording lives in `src/lib/consent.ts`. It is a plain-language template, not legal advice: have a Texas attorney review it.
+
+**Tuition and payments.** Pricing is **$1,500 in full, or $250 a month for 6 months** (change it in `src/lib/pricing.ts`). Set up each student's plan on their page (you can change the total for a discount or scholarship). Record each payment as it arrives (Square, cash, Zelle…) and the app tracks paid, balance, next due date and what's past due, and can email the student a receipt. **Payments** shows everyone at a glance, with past-due students first. Students see their own schedule, balance and history under **Tuition**. Paste your Square payment links on the Payments page and students get a "Pay with Square" button. Payments are recorded by you by hand; nothing is charged automatically.
+
+### Installing this update
+1. **Supabase → SQL Editor → New query**: paste all of `supabase/06_tuition_applications_consent.sql` → Run. Do this before the new code goes live. It is safe to run twice.
+2. Upload the files in this patch to GitHub at the same paths (keep the folder structure). Vercel redeploys automatically.
+3. Optional: in Vercel add `ADMIN_NOTIFY_EMAIL` (where "new application" and "consent signed" alerts go). If you skip it, they go to `studio@dreambigctx.com`.
+4. Open **Payments** and paste your Square links.
+5. On your WordPress academy page, point the Apply button at `https://app.dreambigctx.com/apply`.
+
+Emails use Resend like the rest of the app. If it isn't configured, nothing breaks: the guardian link is shown on the screen so you can text it.
