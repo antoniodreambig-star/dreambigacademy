@@ -27,7 +27,7 @@ export default function PublicHeader() {
         <nav className="pubnav" aria-label="Main">
           <div id="pubnav-links" className="pubnav__links" data-open={open}>
             <a href="https://dreambigctx.com/academy/">About the Academy</a>
-            <a href="https://dreambigctx.com">Dream Big Studios</a>
+            <a href="https://dreambigctx.com">DreamBigCTX.com</a>
             <Link href="/login">Log in</Link>
           </div>
           <Link className="pubnav__apply" href="/apply">

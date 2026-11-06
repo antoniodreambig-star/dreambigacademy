@@ -196,6 +196,7 @@ th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: v
   .pubnav .pubnav__apply { padding: 8px 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .pubnav__toggle span, .pubnav .pubnav__apply { transition: none; } }
+main.main--flush { padding-top: 0; }
 .pubhero { position: relative; color: #fff; padding: clamp(48px, 9vw, 120px) 0; background: linear-gradient(180deg, rgba(30,15,51,.55) 0%, rgba(30,15,51,.94) 100%), radial-gradient(70% 60% at 15% 0%, rgba(74,125,255,.35), transparent 60%), url(/hero.jpg) center / cover no-repeat; }
 .pubhero h1 { font-size: clamp(2.3rem, 6vw, 4.4rem); font-weight: 850; font-stretch: 125%; line-height: .98; letter-spacing: -.025em; max-width: 14ch; text-wrap: balance; }
 .pubhero p { max-width: 52ch; font-size: 18px; color: rgba(255,255,255,.88); margin: 18px 0 0; }

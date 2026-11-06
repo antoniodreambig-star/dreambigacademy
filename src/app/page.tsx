@@ -19,7 +19,7 @@ export default async function Landing() {
   return (
     <>
       <PublicHeader />
-      <main>
+      <main className="main--flush">
         <section className="pubhero">
           <div className="wrap">
             <p className="eyebrow" style={{ color: '#ff8fab' }}>Dream Big Studios · Killeen, TX</p>
