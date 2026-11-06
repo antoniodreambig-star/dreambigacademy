@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireInstructor } from '@/lib/auth';
 import PaymentForm from '@/components/PaymentFields';
-import { PLAN_LABEL, STATE_CHIP, STATE_LABEL, money, standing } from '@/lib/pricing';
+import { PLAN_LABEL, STATE_CHIP, STATE_LABEL, money, standing, termsFor } from '@/lib/pricing';
 import { fmtDate, todayLocal } from '@/lib/schedule';
 import type { Cohort, Enrollment, Payment, Profile } from '@/lib/types';
 import { saveSquareLinks } from './actions';
@@ -18,7 +18,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
     supabase.from('enrollments').select('*'),
     supabase.from('payments').select('*'),
     supabase.from('cohorts').select('*'),
-    supabase.from('app_settings').select('key, value').in('key', ['square_link_full', 'square_link_monthly']),
+    supabase.from('app_settings').select('key, value').in('key', ['square_link_full', 'square_link_monthly', 'square_link_online_full', 'square_link_online_monthly']),
   ]);
   const today = todayLocal();
   const E = new Map(((enrs ?? []) as Enrollment[]).map((e) => [e.student_id, e]));
@@ -64,7 +64,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
                   <tr key={p.id}>
                     <td>
                       <Link href={`/admin/students/${p.id}#tuition`} style={{ textDecoration: 'none' }}><strong>{p.full_name || p.email}</strong></Link>
-                      {cohort && <><br /><span className="small muted">{cohort.name}</span></>}
+                      {cohort && <><br /><span className="small muted">{cohort.name}{cohort.format === 'online' ? ' · online' : ''}</span></>}
                     </td>
                     <td>{e ? PLAN_LABEL[e.plan] : <span className="muted">—</span>}</td>
                     <td>{s ? money(s.paid) : '—'}</td>
@@ -90,11 +90,17 @@ export default async function Payments({ searchParams }: { searchParams: Promise
       <section className="card stack" style={{ marginTop: 16 }}>
         <h2>Square payment links</h2>
         <p className="small muted" style={{ margin: 0 }}>
-          Create a payment link in Square, paste it here, and students see a “Pay with Square” button on their Tuition page. Use one link for the full {money(150000)} and one for the monthly {money(25000)} payment.
+          Create a payment link in Square, paste it here, and students see a “Pay with Square” button on their Tuition page. Each course has its own links because the prices differ: in person is {money(termsFor('in_person').total)} in full or {money(termsFor('in_person').monthlyCents)} a month; online is {money(termsFor('online').total)} in full{termsFor('online').allowMonthly ? ` or about ${money(termsFor('online').monthlyCents)} a month` : ''}. An online student never sees the in-person links.
         </p>
         <form action={saveSquareLinks} className="stack">
-          <div><label htmlFor="slf">Pay-in-full link</label><input id="slf" name="square_link_full" type="url" placeholder="https://square.link/u/…" defaultValue={links.get('square_link_full') ?? ''} /></div>
-          <div><label htmlFor="slm">Monthly payment link</label><input id="slm" name="square_link_monthly" type="url" placeholder="https://square.link/u/…" defaultValue={links.get('square_link_monthly') ?? ''} /></div>
+          <h3 style={{ fontSize: '1.05rem' }}>In person</h3>
+          <div><label htmlFor="slf">Pay-in-full link ({money(termsFor('in_person').total)})</label><input id="slf" name="square_link_full" type="url" placeholder="https://square.link/u/…" defaultValue={links.get('square_link_full') ?? ''} /></div>
+          <div><label htmlFor="slm">Monthly payment link ({money(termsFor('in_person').monthlyCents)})</label><input id="slm" name="square_link_monthly" type="url" placeholder="https://square.link/u/…" defaultValue={links.get('square_link_monthly') ?? ''} /></div>
+          <h3 style={{ fontSize: '1.05rem' }}>Online only</h3>
+          <div><label htmlFor="solf">Pay-in-full link ({money(termsFor('online').total)})</label><input id="solf" name="square_link_online_full" type="url" placeholder="https://square.link/u/…" defaultValue={links.get('square_link_online_full') ?? ''} /></div>
+          {termsFor('online').allowMonthly && (
+            <div><label htmlFor="solm">Monthly payment link (about {money(termsFor('online').monthlyCents)})</label><input id="solm" name="square_link_online_monthly" type="url" placeholder="https://square.link/u/…" defaultValue={links.get('square_link_online_monthly') ?? ''} /></div>
+          )}
           <button className="btn btn--sm" type="submit">Save links</button>
         </form>
       </section>

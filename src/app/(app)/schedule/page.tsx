@@ -1,7 +1,8 @@
 import { requireStudent } from '@/lib/auth';
-import { classDate, dueDate, fmtDate, fmtTime, hasHomework, hwState, todayLocal, type HwState } from '@/lib/schedule';
+import { buildSessions, DEFAULT_TZ, loadCurriculum } from '@/lib/online';
+import { classDate, dueDate, fmtDate, fmtTime, fmtZoned, hasHomework, hwState, todayLocal, type HwState } from '@/lib/schedule';
 import { siteUrl } from '@/lib/email';
-import type { Cohort, Project, Submission, SubmissionComment, Week } from '@/lib/types';
+import type { Cohort, OnlineProfile, OnlineSession, Submission, SubmissionComment } from '@/lib/types';
 import HomeworkForm from '@/components/HomeworkForm';
 import AudioFeedback, { type FbComment } from '@/components/AudioFeedback';
 import { undoHomework } from './actions';
@@ -23,16 +24,17 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
       </>
     );
   }
-  const [{ data: cohort }, { data: weeks }, { data: subs }, { data: projects }] = await Promise.all([
-    supabase.from('cohorts').select('*').eq('id', profile.cohort_id).single(),
-    supabase.from('weeks').select('*').order('week'),
-    supabase.from('submissions').select('*').eq('student_id', profile.id),
-    supabase.from('projects').select('*'),
-  ]);
+  const { data: cohort } = await supabase.from('cohorts').select('*').eq('id', profile.cohort_id).single();
   const c = cohort as Cohort;
-  const W = (weeks ?? []) as Week[];
+  const online = c.format === 'online';
+  const [{ weeks: W, projects: P }, { data: subs }, { data: ovs }, { data: op }] = await Promise.all([
+    loadCurriculum(supabase, c.format),
+    supabase.from('submissions').select('*').eq('student_id', profile.id),
+    online ? supabase.from('online_sessions').select('*').eq('cohort_id', c.id) : Promise.resolve({ data: [] }),
+    online ? supabase.from('online_profiles').select('time_zone').eq('student_id', profile.id).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
   const S = new Map(((subs ?? []) as Submission[]).map((s) => [s.week, s]));
-  const P = (projects ?? []) as Project[];
+  const tz = ((op as Pick<OnlineProfile, 'time_zone'> | null)?.time_zone) || DEFAULT_TZ;
   const today = todayLocal();
 
   // Signed links for uploaded files.
@@ -61,25 +63,41 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
     { title: 'Not assigned yet', list: items.filter((i) => i.state === 'later') },
   ];
   const upcoming = W.filter((w) => classDate(c, w.week) >= today).slice(0, 4);
+  const liveRows = online ? buildSessions(c, W, (ovs ?? []) as OnlineSession[]).filter((r) => r.state === 'open' || r.state === 'later').slice(0, 4) : [];
   const feed = `${siteUrl()}/api/calendar/${profile.calendar_token}.ics`;
 
   return (
     <>
       <h1 className="page-title">Schedule and homework</h1>
-      <p className="sub">{c.name}: class starts {fmtTime(c.class_start)}, {c.class_hours} hours.</p>
+      <p className="sub">
+        {online ? `${c.name}: live sessions run ${c.class_hours} hours. Times are in your time zone.` : `${c.name}: class starts ${fmtTime(c.class_start)}, ${c.class_hours} hours.`}
+      </p>
       {q.ok && <div className="notice notice--ok">Homework turned in. Nice work.</div>}
       {q.err && <div className="notice notice--err">That didn’t go through ({q.err === 'size' ? 'file is over 25 MB' : 'please try again'}).</div>}
 
       <div className="grid grid--2" style={{ marginBottom: 20 }}>
         <section className="card">
-          <p className="eyebrow">Next classes</p>
+          <p className="eyebrow">{online ? 'Next live sessions' : 'Next classes'}</p>
           <div className="stack">
-            {upcoming.length === 0 && <p className="muted">No more classes on the calendar.</p>}
-            {upcoming.map((w) => (
-              <div key={w.week}>
-                <strong>{fmtDate(classDate(c, w.week))}</strong> · Week {w.week}: {w.title}
-              </div>
-            ))}
+            {online ? (
+              <>
+                {liveRows.length === 0 && <p className="muted">No more sessions on the calendar.</p>}
+                {liveRows.map((r) => (
+                  <div key={r.week}>
+                    <strong>{fmtZoned(r.times.start, tz)}</strong> · Week {r.week}: {r.title}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <>
+                {upcoming.length === 0 && <p className="muted">No more classes on the calendar.</p>}
+                {upcoming.map((w) => (
+                  <div key={w.week}>
+                    <strong>{fmtDate(classDate(c, w.week))}</strong> · Week {w.week}: {w.title}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </section>
         <section className="card">

@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { requireInstructor } from '@/lib/auth';
 import { consentLink } from '@/lib/consents';
-import { PLAN_LABEL, MONTHLY_CENTS, MONTHLY_COUNT, TUITION_CENTS, money } from '@/lib/pricing';
+import { PLAN_LABEL, money, planBlurb, termsFor } from '@/lib/pricing';
+import { TIME_ZONES } from '@/lib/online';
 import { fmtDate } from '@/lib/schedule';
 import type { Application, Cohort, GuardianConsent } from '@/lib/types';
 import { requestConsent } from '../students/[id]/consent-actions';
@@ -67,6 +68,22 @@ export default async function Applications({ searchParams }: { searchParams: Pro
             </div>
             <div className="row">
               <div>
+                <label htmlFor="as-format">Course</label>
+                <select id="as-format" name="format" defaultValue="in_person">
+                  <option value="in_person">In person (6 months)</option>
+                  <option value="online">Online only (3 months)</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="as-tz">Time zone (online only)</label>
+                <select id="as-tz" name="time_zone" defaultValue="">
+                  <option value="">Not set</option>
+                  {TIME_ZONES.map((z) => <option key={z.value} value={z.value}>{z.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="row">
+              <div>
                 <label htmlFor="as-label">Label</label>
                 <select id="as-label" name="label" defaultValue="waitlist">
                   <option value="new">New (decide later)</option>
@@ -79,15 +96,15 @@ export default async function Applications({ searchParams }: { searchParams: Pro
                 <label htmlFor="as-cohort">Class</label>
                 <select id="as-cohort" name="cohort_id" defaultValue="">
                   <option value="">None yet</option>
-                  {C.map((c) => <option key={c.id} value={c.id}>{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
+                  {C.map((c) => <option key={c.id} value={c.id}>{c.name}{c.format === 'online' ? ' (online)' : ''} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
                 </select>
               </div>
             </div>
             <div>
               <label htmlFor="as-plan">Payment plan</label>
               <select id="as-plan" name="plan" defaultValue="monthly">
-                <option value="monthly">Monthly: {money(MONTHLY_CENTS)} × {MONTHLY_COUNT}</option>
-                <option value="full">Pay in full: {money(TUITION_CENTS)}</option>
+                <option value="monthly">Monthly: {money(termsFor('in_person').monthlyCents)} × {termsFor('in_person').monthlyCount} in person, or {money(termsFor('online').monthlyCents)} × {termsFor('online').monthlyCount} online</option>
+                <option value="full">Pay in full: {money(termsFor('in_person').total)} in person, or {money(termsFor('online').total)} online</option>
               </select>
             </div>
             <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
@@ -124,7 +141,7 @@ export default async function Applications({ searchParams }: { searchParams: Pro
               <p className="eyebrow">
                 {a.status === 'new' ? 'New' : a.status === 'accepted' ? 'Accepted' : a.status === 'waitlist' ? 'Waitlist' : 'Declined'} · applied {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
-              <h2 style={{ marginBottom: 2 }}>{a.full_name} {a.under_18 && <span className="chip chip--soon">Under 18</span>}</h2>
+              <h2 style={{ marginBottom: 2 }}>{a.full_name} {a.format === 'online' && <span className="chip chip--soon">Online</span>} {a.under_18 && <span className="chip chip--soon">Under 18</span>}</h2>
               <p className="muted" style={{ margin: 0 }}>{a.email}{a.phone ? ` · ${a.phone}` : ''}{a.birth_date ? ` · age ${age(a.birth_date)}` : ''}</p>
             </div>
 
@@ -134,7 +151,10 @@ export default async function Applications({ searchParams }: { searchParams: Pro
               </p>
             )}
             <p style={{ margin: 0 }}>
-              <strong>Wants to pay:</strong> {a.plan ? `${PLAN_LABEL[a.plan]} (${a.plan === 'full' ? money(TUITION_CENTS) : `${money(MONTHLY_CENTS)} × ${MONTHLY_COUNT}`})` : '—'}
+              <strong>Course:</strong> {a.format === 'online' ? `Online only (${termsFor('online').length})` : `In person (${termsFor('in_person').length})`}
+              {a.format === 'online' && <> · <strong>Time zone:</strong> {a.time_zone ? a.time_zone.replace(/_/g, ' ') : '—'}{a.location ? ` · ${a.location}` : ''}</>}
+              <br />
+              <strong>Wants to pay:</strong> {a.plan ? `${PLAN_LABEL[a.plan]} (${planBlurb(a.plan, a.format)})` : '—'}
               {cohort && <> · <strong>Preferred start:</strong> {cohort.name} ({fmtDate(cohort.start_date, { year: 'numeric' })})</>}
             </p>
             {a.experience && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}><strong>Experience:</strong> {a.experience}</p>}
@@ -171,16 +191,16 @@ export default async function Applications({ searchParams }: { searchParams: Pro
                   <div className="row">
                     <div>
                       <label>Class</label>
-                      <select name="cohort_id" defaultValue={a.cohort_id ?? C[0]?.id ?? ''}>
+                      <select name="cohort_id" defaultValue={a.cohort_id ?? C.find((c) => c.format === a.format)?.id ?? ''}>
                         <option value="">None yet</option>
-                        {C.map((c) => <option key={c.id} value={c.id}>{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
+                        {C.filter((c) => c.format === a.format).map((c) => <option key={c.id} value={c.id}>{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
                       </select>
                     </div>
                     <div>
                       <label>Payment plan</label>
                       <select name="plan" defaultValue={a.plan ?? 'monthly'}>
-                        <option value="monthly">Monthly: {money(MONTHLY_CENTS)} × {MONTHLY_COUNT}</option>
-                        <option value="full">Pay in full: {money(TUITION_CENTS)}</option>
+                        {termsFor(a.format).allowMonthly && <option value="monthly">Monthly: {money(termsFor(a.format).monthlyCents)} × {termsFor(a.format).monthlyCount}</option>}
+                        <option value="full">Pay in full: {money(termsFor(a.format).total)}</option>
                       </select>
                     </div>
                   </div>

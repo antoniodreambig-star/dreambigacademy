@@ -31,7 +31,10 @@ export async function saveEnrollment(f: FormData) {
   const firstDue = str(f, 'first_due', 10);
   const total = parseDollars(str(f, 'total', 12));
   if (!id || !isPlan(plan) || !DATE.test(firstDue) || !total) redirect(tag(to, 'err=plan'));
-  const installments = plan === 'full' ? 1 : Math.max(1, Math.min(24, Math.round(Number(str(f, 'installments', 2))) || planInstallments(plan)));
+  // The default number of payments depends on the student's track (6 in person, 3 online).
+  const { data: st } = await supabase.from('profiles').select('cohort_id').eq('id', id).maybeSingle();
+  const { data: co } = st?.cohort_id ? await supabase.from('cohorts').select('format').eq('id', st.cohort_id).maybeSingle() : { data: null };
+  const installments = plan === 'full' ? 1 : Math.max(1, Math.min(24, Math.round(Number(str(f, 'installments', 2))) || planInstallments(plan, co?.format === 'online' ? 'online' : 'in_person')));
   const { error } = await supabase
     .from('enrollments')
     .upsert({ student_id: id, plan, total_cents: total, installments, first_due: firstDue, note: none(str(f, 'note', 500)), updated_at: new Date().toISOString() }, { onConflict: 'student_id' });
@@ -90,7 +93,7 @@ export async function deletePayment(f: FormData) {
 export async function saveSquareLinks(f: FormData) {
   const { supabase } = await requireInstructor();
   const rows: { key: string; value: string; updated_at: string }[] = [];
-  for (const key of ['square_link_full', 'square_link_monthly']) {
+  for (const key of ['square_link_full', 'square_link_monthly', 'square_link_online_full', 'square_link_online_monthly']) {
     const v = str(f, key, 500);
     if (v) {
       try {

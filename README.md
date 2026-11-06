@@ -96,3 +96,21 @@ npm run dev                  # http://localhost:3000
 5. On your WordPress academy page, point the Apply button at `https://app.dreambigctx.com/apply`.
 
 Emails use Resend like the rest of the app. If it isn't configured, nothing breaks: the guardian link is shown on the screen so you can text it.
+
+## Online-only students (added Nov 2026)
+
+A second track for students who attend remotely: **$1,000 for the full course, 3 months (13 weeks)**. Everything is per class: a class is either *in person* or *online*, and its students automatically get the online experience.
+
+**What online students get.** Their own Home (setup checklist, next live session with a Join button in their own time zone, homework, recordings to catch up on, office hours, announcements), **Live sessions** (join links, recordings, slides, "I watched this"), **Set up** (time zone, equipment checklist), **Office hours** (book/cancel slots), the 13-week **Course**, **Schedule**, **Tuition** (online price and plan), and class rules and guardian-consent wording written for remote learning. Reminders and the calendar feed use the student's time zone.
+
+**What you manage.** **Classes** has separate "New in-person class" and "New online class" forms (meeting link, passcode, seats). **Online classes** (admin menu) is the per-week session manager: recording, slides, reschedule or cancel, and who hasn't caught up. **Office hours** creates and clears slots. **Curriculum** has In person / Online tabs. **Applications** shows the track and time zone, and you can add a student directly with their course.
+
+### Installing this update
+1. **Supabase → SQL Editor**: run all of `supabase/20_online_students.sql` first. It is safe to run twice.
+2. Upload the changed and new files to GitHub at the same paths. Do not upload `node_modules/` or `tsconfig.tsbuildinfo`.
+3. **Payments**: paste two new Square links, one for online paid in full ($1,000) and one for online monthly. Online students never fall back to the in-person links.
+4. Create an online class (set the start date, class time in Killeen time, meeting link) and edit the 13-week online curriculum draft under **Curriculum → Online**.
+5. Point a WordPress button at `https://app.dreambigctx.com/apply?track=online` (and `?track=in_person` for the studio course). `/apply` alone shows a chooser.
+6. Pricing and defaults are in `src/lib/pricing.ts` (`ONLINE_TUITION_CENTS`, `ONLINE_ALLOW_MONTHLY`, `ONLINE_MONTHLY_COUNT`).
+
+Note: `package-lock.json` is out of sync with `package.json` (it was before this change), so use `npm install` locally rather than `npm ci`.

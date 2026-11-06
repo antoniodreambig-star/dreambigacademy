@@ -1,17 +1,19 @@
 import { requireStudent } from '@/lib/auth';
-import { METHOD_LABEL, MONTHLY_CENTS, MONTHLY_COUNT, PLAN_LABEL, STATE_CHIP, STATE_LABEL, TUITION_CENTS, dueSchedule, isMethod, money, standing } from '@/lib/pricing';
+import { METHOD_LABEL, PLAN_LABEL, STATE_CHIP, STATE_LABEL, dueSchedule, isMethod, money, standing, termsFor } from '@/lib/pricing';
 import { fmtDate, todayLocal } from '@/lib/schedule';
-import type { Enrollment, Payment } from '@/lib/types';
+import type { Cohort, Enrollment, Payment } from '@/lib/types';
 
 export const metadata = { title: 'Tuition' };
 
 export default async function Tuition() {
   const { supabase, profile } = await requireStudent();
-  const [{ data: e }, { data: p }, { data: st }] = await Promise.all([
+  const [{ data: e }, { data: p }, { data: st }, { data: co }] = await Promise.all([
     supabase.from('enrollments').select('*').eq('student_id', profile.id).maybeSingle(),
     supabase.from('payments').select('*').eq('student_id', profile.id).order('paid_on', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('app_settings').select('key, value').in('key', ['square_link_full', 'square_link_monthly']),
+    supabase.from('app_settings').select('key, value').in('key', ['square_link_full', 'square_link_monthly', 'square_link_online_full', 'square_link_online_monthly']),
+    profile.cohort_id ? supabase.from('cohorts').select('format').eq('id', profile.cohort_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
+  const terms = termsFor((co as Pick<Cohort, 'format'> | null)?.format);
   const enr = (e as Enrollment | null) ?? null;
   const pays = (p ?? []) as Payment[];
   const links = new Map(((st ?? []) as { key: string; value: string }[]).map((r) => [r.key, r.value]));
@@ -23,7 +25,9 @@ export default async function Tuition() {
         <h1 className="page-title">Tuition</h1>
         <div className="card stack">
           <p style={{ margin: 0 }}>Your payment plan hasn’t been set up yet. Your instructor will set it up soon and it will show up here.</p>
-          <p className="small muted" style={{ margin: 0 }}>Tuition is {money(TUITION_CENTS)}, paid in full, or {money(MONTHLY_CENTS)} a month for {MONTHLY_COUNT} months.</p>
+          <p className="small muted" style={{ margin: 0 }}>
+            {terms.format === 'online' ? 'Online-only tuition' : 'Tuition'} is {money(terms.total)}, paid in full{terms.allowMonthly ? `, or ${money(terms.monthlyCents)} a month for ${terms.monthlyCount} months` : ''}.
+          </p>
         </div>
       </>
     );
@@ -32,7 +36,9 @@ export default async function Tuition() {
   const paid = pays.reduce((a, x) => a + x.amount_cents, 0);
   const s = standing(enr, paid, today);
   const sched = dueSchedule(enr);
-  const link = (enr.plan === 'full' ? links.get('square_link_full') : links.get('square_link_monthly')) || links.get('square_link_monthly') || links.get('square_link_full') || '';
+  // Each track has its own Square links (different prices), so an online student never sees the in-person links.
+  const key = (full: boolean) => `square_link_${terms.format === 'online' ? 'online_' : ''}${full ? 'full' : 'monthly'}`;
+  const link = (enr.plan === 'full' ? links.get(key(true)) : links.get(key(false))) || links.get(key(false)) || links.get(key(true)) || '';
 
   return (
     <>

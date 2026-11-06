@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireProfile } from '@/lib/auth';
-import { classDate, currentWeek, dueDate, fmtDate, fmtTime, hasHomework, hwState, todayLocal } from '@/lib/schedule';
+import { classDate, courseWeeks, currentWeek, dueDate, fmtDate, fmtTime, hasHomework, hwState, todayLocal } from '@/lib/schedule';
+import OnlineHome from '@/components/OnlineHome';
 import type { Announcement, Cohort, Submission, Week } from '@/lib/types';
 
 export const metadata = { title: 'Home' };
@@ -22,8 +23,11 @@ export default async function Home() {
     );
   }
 
+  const { data: cohortRow } = await supabase.from('cohorts').select('*').eq('id', profile.cohort_id).single();
+  if ((cohortRow as Cohort | null)?.format === 'online') return <OnlineHome supabase={supabase} profile={profile} cohort={cohortRow as Cohort} />;
+
   const [{ data: cohort }, { data: weeks }, { data: subs }, { data: anns }] = await Promise.all([
-    supabase.from('cohorts').select('*').eq('id', profile.cohort_id).single(),
+    Promise.resolve({ data: cohortRow }),
     supabase.from('weeks').select('*').order('week'),
     supabase.from('submissions').select('*').eq('student_id', profile.id),
     supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(3),
@@ -48,7 +52,7 @@ export default async function Home() {
       <h1 className="page-title">Hi {first}</h1>
       <p className="sub">
         {c.name} ·{' '}
-        {cw === 0 ? `Classes start ${fmtDate(c.start_date, { year: 'numeric' })}` : cw > 26 ? 'Course complete' : `Week ${cw} of 26`}
+        {cw === 0 ? `Classes start ${fmtDate(c.start_date, { year: 'numeric' })}` : cw > courseWeeks(c.format) ? 'Course complete' : `Week ${cw} of ${courseWeeks(c.format)}`}
       </p>
 
       <div className="grid grid--2">

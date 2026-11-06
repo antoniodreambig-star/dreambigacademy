@@ -5,23 +5,37 @@ import { redirect } from 'next/navigation';
 import { requireInstructor } from '@/lib/auth';
 import { emailConfigured, sendEmail, sendEmailEach, siteUrl } from '@/lib/email';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { cleanUrl } from '@/lib/online';
+import { ONLINE_WEEKS, IN_PERSON_WEEKS } from '@/lib/schedule';
+import type { Format } from '@/lib/types';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
 const none = (v: string) => (v === '' ? null : v);
+
+/** The fields every class form shares. Online classes also carry the meeting link. */
+function cohortFields(f: FormData, start: string) {
+  const online = str(f, 'format', 10) === 'online';
+  const seats = Math.round(Number(str(f, 'seats', 4)));
+  return {
+    name: str(f, 'name', 80),
+    start_date: start,
+    class_weekday: new Date(`${start}T12:00:00Z`).getUTCDay(),
+    class_start: str(f, 'class_start', 5) || '10:00',
+    class_hours: Number(str(f, 'class_hours', 4)) || (online ? 2 : 3),
+    format: (online ? 'online' : 'in_person') as Format,
+    seats: seats >= 1 && seats <= 200 ? seats : online ? 12 : 6,
+    ...(online
+      ? { meeting_url: cleanUrl(str(f, 'meeting_url', 500)), meeting_passcode: none(str(f, 'meeting_passcode', 60)), meeting_notes: none(str(f, 'meeting_notes', 600)) }
+      : { meeting_url: null, meeting_passcode: null, meeting_notes: null }),
+  };
+}
 
 export async function createCohort(f: FormData) {
   const { supabase } = await requireInstructor();
   const name = str(f, 'name', 80);
   const start = str(f, 'start_date', 10);
   if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(start)) redirect('/admin/cohorts?err=cohort');
-  const day = new Date(`${start}T12:00:00Z`).getUTCDay();
-  const { error } = await supabase.from('cohorts').insert({
-    name,
-    start_date: start,
-    class_weekday: day,
-    class_start: str(f, 'class_start', 5) || '10:00',
-    class_hours: Number(str(f, 'class_hours', 4)) || 3,
-  });
+  const { error } = await supabase.from('cohorts').insert(cohortFields(f, start));
   if (error) redirect('/admin/cohorts?err=cohort');
   revalidatePath('/admin/cohorts');
   redirect('/admin/cohorts?ok=cohort');
@@ -32,16 +46,7 @@ export async function updateCohort(f: FormData) {
   const id = str(f, 'id', 40);
   const start = str(f, 'start_date', 10);
   if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(start)) redirect('/admin/cohorts?err=cohort');
-  const { error } = await supabase
-    .from('cohorts')
-    .update({
-      name: str(f, 'name', 80),
-      start_date: start,
-      class_weekday: new Date(`${start}T12:00:00Z`).getUTCDay(),
-      class_start: str(f, 'class_start', 5) || '10:00',
-      class_hours: Number(str(f, 'class_hours', 4)) || 3,
-    })
-    .eq('id', id);
+  const { error } = await supabase.from('cohorts').update(cohortFields(f, start)).eq('id', id);
   if (error) redirect('/admin/cohorts?err=cohort');
   revalidatePath('/', 'layout');
   redirect('/admin/cohorts?ok=updated');
@@ -53,13 +58,20 @@ export async function addInvite(f: FormData) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) redirect('/admin/cohorts?err=email');
   const cohort = none(str(f, 'cohort_id', 40));
   const name = none(str(f, 'full_name', 120));
-  const { error } = await supabase.from('invites').upsert({ email, full_name: name, cohort_id: cohort }, { onConflict: 'email' });
+  let format: Format = 'in_person';
+  if (cohort) {
+    const { data: co } = await supabase.from('cohorts').select('format').eq('id', cohort).maybeSingle();
+    if (co?.format === 'online') format = 'online';
+  }
+  const { error } = await supabase.from('invites').upsert({ email, full_name: name, cohort_id: cohort, format }, { onConflict: 'email' });
   if (error) redirect('/admin/cohorts?err=email');
   if (f.get('notify') === '1') {
     await sendEmail(
       email,
       'You’re enrolled in the Dream Big Academy',
-      `Hi ${name || 'there'},\n\nYour spot in the Dream Big Studios Audio Engineering Academy is set up. Go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll then pick a username and password for future sign-ins:\n\n${siteUrl()}/login\n\nYou'll see your class schedule, homework due dates and a way to message your instructor.`,
+      format === 'online'
+        ? `Hi ${name || 'there'},\n\nYour spot in the online Dream Big Studios Audio Engineering Academy is set up. Go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll then pick a username and password for future sign-ins:\n\n${siteUrl()}/login\n\nOnce you’re in, start with the “Set up” page: it has a checklist so you’re ready for the first live session. You’ll also find the meeting link, your schedule in your own time zone, recordings and a way to book office hours.`
+        : `Hi ${name || 'there'},\n\nYour spot in the Dream Big Studios Audio Engineering Academy is set up. Go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll then pick a username and password for future sign-ins:\n\n${siteUrl()}/login\n\nYou'll see your class schedule, homework due dates and a way to message your instructor.`,
     );
   }
   revalidatePath('/admin/cohorts');
@@ -115,10 +127,13 @@ export async function saveNote(f: FormData) {
 
 export async function saveWeek(f: FormData) {
   const { supabase } = await requireInstructor();
+  const online = str(f, 'track', 10) === 'online';
   const week = Number(f.get('week'));
-  if (!Number.isInteger(week) || week < 1 || week > 26) redirect('/admin/curriculum');
+  const max = online ? ONLINE_WEEKS : IN_PERSON_WEEKS;
+  const back = `/admin/curriculum${online ? '?track=online&' : '?'}`;
+  if (!Number.isInteger(week) || week < 1 || week > max) redirect(`/admin/curriculum${online ? '?track=online' : ''}`);
   const { error } = await supabase
-    .from('weeks')
+    .from(online ? 'online_weeks' : 'weeks')
     .update({
       title: str(f, 'title', 120) || 'Outline coming soon',
       phase: str(f, 'phase', 120),
@@ -130,7 +145,7 @@ export async function saveWeek(f: FormData) {
     .eq('week', week);
   revalidatePath('/classes');
   revalidatePath('/schedule');
-  redirect(`/admin/curriculum?${error ? 'err=1' : 'ok=' + week}#w${week}`);
+  redirect(`${back}${error ? 'err=1' : 'ok=' + week}#w${week}`);
 }
 
 export async function postAnnouncement(f: FormData) {
@@ -173,7 +188,7 @@ export async function saveAttendance(f: FormData) {
   const rows: { student_id: string; week: number; status: string; note: string | null; marked_at: string }[] = [];
   for (const [key, val] of f.entries()) {
     if (!key.startsWith('s_') || typeof val !== 'string') continue;
-    if (!['present', 'late', 'absent', 'excused'].includes(val)) continue;
+    if (!['present', 'late', 'absent', 'excused', 'watched'].includes(val)) continue;
     const id = key.slice(2);
     rows.push({ student_id: id, week, status: val, note: none(str(f, `n_${id}`, 200)), marked_at: new Date().toISOString() });
   }

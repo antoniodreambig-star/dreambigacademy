@@ -1,7 +1,7 @@
 import AuthShell from '@/components/AuthShell';
 import { createClient } from '@/lib/supabase/server';
-import { RULES } from '@/lib/rules';
-import { CONSENT_TERMS, MEDIA_RELEASE, PROGRAM_SUMMARY } from '@/lib/consent';
+import { RULES, RULES_ONLINE } from '@/lib/rules';
+import { CONSENT_TERMS, CONSENT_TERMS_ONLINE, MEDIA_RELEASE, PROGRAM_SUMMARY, PROGRAM_SUMMARY_ONLINE } from '@/lib/consent';
 import { signConsent } from './actions';
 
 export const metadata = { title: 'Parent / guardian consent · Dream Big Academy', robots: { index: false, follow: false } };
@@ -21,6 +21,7 @@ interface Info {
   status: 'pending' | 'signed';
   signed_name: string | null;
   signed_at: string | null;
+  format?: string | null;
 }
 
 export default async function Consent({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ err?: string; done?: string }> }) {
@@ -46,6 +47,9 @@ export default async function Consent({ params, searchParams }: { params: Promis
   }
 
   const student = info.student_name || 'the student';
+  const online = info.format === 'online';
+  const rules = online ? RULES_ONLINE : RULES;
+  const terms = online ? CONSENT_TERMS_ONLINE : CONSENT_TERMS;
 
   if (info.status === 'signed') {
     return (
@@ -73,18 +77,18 @@ export default async function Consent({ params, searchParams }: { params: Promis
           <p className="muted">For: <strong>{student}</strong></p>
         </div>
         {q.err && <div className="notice notice--err" role="alert">{ERR[q.err] ?? ERR.save}</div>}
-        <p style={{ margin: 0 }}>{PROGRAM_SUMMARY}</p>
+        <p style={{ margin: 0 }}>{online ? PROGRAM_SUMMARY_ONLINE : PROGRAM_SUMMARY}</p>
 
-        <h2 style={{ marginBottom: 0 }}>Studio rules</h2>
+        <h2 style={{ marginBottom: 0 }}>{online ? 'Class rules' : 'Studio rules'}</h2>
         <ol className="rules">
-          {RULES.map((r) => (
+          {rules.map((r) => (
             <li key={r.title}><strong>{r.title}.</strong> {r.text}</li>
           ))}
         </ol>
 
         <h2 style={{ marginBottom: 0 }}>What you’re agreeing to</h2>
         <ul className="rules" style={{ paddingLeft: 20 }}>
-          {CONSENT_TERMS.map((t) => (
+          {terms.map((t) => (
             <li key={t.title}><strong>{t.title}.</strong> {t.text}</li>
           ))}
         </ul>
@@ -94,7 +98,7 @@ export default async function Consent({ params, searchParams }: { params: Promis
           {[
             ['is_guardian', `I am the parent or legal guardian of ${student}.`],
             ['permission', 'I give permission for my child to take part in the Academy.'],
-            ['rules', 'I have read and agree to the studio rules above.'],
+            ['rules', online ? 'I have read and agree to the class rules above.' : 'I have read and agree to the studio rules above.'],
             ['risks', 'I have read and accept the safety, equipment and emergency terms above.'],
           ].map(([name, label]) => (
             <label key={name} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontWeight: 600 }}>

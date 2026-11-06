@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import type { Profile } from '@/lib/types';
+import type { Cohort, Profile } from '@/lib/types';
 import { RULES_VERSION } from '@/lib/rules';
 
 /** Signed-in profile without forcing the username/password setup (used by /welcome itself). */
@@ -41,4 +41,14 @@ export async function requireOwner() {
   const { data } = await ctx.supabase.rpc('is_owner');
   if (data !== true) redirect('/admin');
   return ctx;
+}
+
+/** Online-only students. In-person students (and the instructor) are sent to their own home page. */
+export async function requireOnlineStudent() {
+  const ctx = await requireStudent();
+  if (!ctx.profile.cohort_id) redirect('/home');
+  const { data } = await ctx.supabase.from('cohorts').select('*').eq('id', ctx.profile.cohort_id).single();
+  const cohort = data as Cohort | null;
+  if (!cohort || cohort.format !== 'online') redirect('/home');
+  return { ...ctx, cohort };
 }

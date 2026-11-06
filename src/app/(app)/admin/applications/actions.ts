@@ -5,7 +5,8 @@ import { redirect } from 'next/navigation';
 import { requireInstructor, requireOwner } from '@/lib/auth';
 import { sendEmail, siteUrl } from '@/lib/email';
 import { ensureConsent, sendConsentEmail } from '@/lib/consents';
-import { MONTHLY_CENTS, MONTHLY_COUNT, PLAN_LABEL, TUITION_CENTS, isPlan, money } from '@/lib/pricing';
+import { PLAN_LABEL, isFormat, isPlan, planBlurb, termsFor } from '@/lib/pricing';
+import { isValidTimeZone } from '@/lib/schedule';
 import type { Application, GuardianConsent } from '@/lib/types';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
@@ -25,22 +26,26 @@ export async function decideApplication(f: FormData) {
   if (decision === 'accept') {
     const cohort = none(str(f, 'cohort_id', 40));
     const planRaw = str(f, 'plan', 10);
-    const plan = isPlan(planRaw) ? planRaw : app.plan;
-    const { error: invErr } = await supabase.from('invites').upsert({ email: app.email, full_name: app.full_name, cohort_id: cohort, plan }, { onConflict: 'email' });
+    const format = app.format;
+    // The monthly plan may not be offered for the online course.
+    const picked = isPlan(planRaw) ? planRaw : app.plan;
+    const plan = picked === 'monthly' && !termsFor(format).allowMonthly ? 'full' : picked;
+    const { error: invErr } = await supabase.from('invites').upsert({ email: app.email, full_name: app.full_name, cohort_id: cohort, plan, format }, { onConflict: 'email' });
     if (invErr) redirect('/admin/applications?err=invite');
     await supabase.from('applications').update({ status: 'accepted', decided_at: new Date().toISOString(), decision_note: note, cohort_id: cohort, plan }).eq('id', id);
 
     let consent: GuardianConsent | null = null;
     if (app.under_18) {
-      consent = await ensureConsent(supabase, { studentEmail: app.email, studentName: app.full_name, guardianName: app.guardian_name ?? '', guardianEmail: app.guardian_email, applicationId: app.id });
+      consent = await ensureConsent(supabase, { studentEmail: app.email, studentName: app.full_name, guardianName: app.guardian_name ?? '', guardianEmail: app.guardian_email, applicationId: app.id, format });
       if (consent && notify) await sendConsentEmail(supabase, consent);
     }
     if (notify) {
-      const price = plan === 'full' ? `${money(TUITION_CENTS)} paid in full` : `${money(MONTHLY_CENTS)} a month for ${MONTHLY_COUNT} months`;
+      const price = planBlurb(plan ?? 'full', format);
+      const online = format === 'online';
       await sendEmail(
         app.email,
         'You’re in: Dream Big Academy',
-        `Hi ${first},\n\nCongratulations, you’ve been accepted into the Dream Big Studios Audio Engineering Academy!\n\nTuition plan: ${plan ? `${PLAN_LABEL[plan]} (${price})` : price}.${note ? `\n\n${note}` : ''}${app.under_18 ? '\n\nBecause you’re under 18, we emailed your parent or guardian a consent form. It needs to be signed before you start.' : ''}\n\nTo get started, go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll pick a username and password:\n\n${siteUrl()}/login`,
+        `Hi ${first},\n\nCongratulations, you’ve been accepted into the ${online ? 'online ' : ''}Dream Big Studios Audio Engineering Academy!\n\nTuition plan: ${plan ? `${PLAN_LABEL[plan]} (${price})` : price}.${note ? `\n\n${note}` : ''}${app.under_18 ? '\n\nBecause you’re under 18, we emailed your parent or guardian a consent form. It needs to be signed before you start.' : ''}\n\nTo get started, go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll pick a username and password:\n\n${siteUrl()}/login${online ? '\n\nOnce you’re in, open the “Set up” page. It has a checklist so you’re ready for the first live session, and you’ll find the meeting link, your schedule in your own time zone, and recordings of every session.' : ''}`,
       );
     }
   } else if (decision === 'waitlist') {
@@ -97,6 +102,8 @@ export async function addStudent(f: FormData) {
   const planRaw = str(f, 'plan', 10);
   const plan = isPlan(planRaw) ? planRaw : null;
   const cohort = none(str(f, 'cohort_id', 40));
+  const formatRaw = str(f, 'format', 10);
+  const format = isFormat(formatRaw) ? formatRaw : 'in_person';
   const { data, error } = await supabase
     .from('applications')
     .insert({
@@ -111,6 +118,8 @@ export async function addStudent(f: FormData) {
       referral: 'Added by instructor',
       plan,
       cohort_id: cohort,
+      format,
+      time_zone: format === 'online' && isValidTimeZone(str(f, 'time_zone', 64)) ? str(f, 'time_zone', 64) : null,
     })
     .select('id')
     .single();

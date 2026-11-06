@@ -25,14 +25,23 @@ export interface Profile {
   created_at: string;
 }
 
+export type Format = 'in_person' | 'online';
+
 export interface Cohort {
   id: string;
   name: string;
   start_date: string; // YYYY-MM-DD, the Week 1 class
   class_weekday: number;
-  class_start: string; // HH:MM:SS
+  class_start: string; // HH:MM:SS (Killeen time)
   class_hours: number;
   active: boolean;
+  /** 'online' = the online-only track: 13 weeks of live video sessions. */
+  format: Format;
+  seats: number;
+  /** Online classes: the Zoom / Meet link for the live sessions. */
+  meeting_url: string | null;
+  meeting_passcode: string | null;
+  meeting_notes: string | null;
 }
 
 export interface Week {
@@ -92,7 +101,7 @@ export interface SubmissionComment {
   created_at: string;
 }
 
-export type AttendanceStatus = 'present' | 'late' | 'absent' | 'excused';
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'excused' | 'watched';
 
 export interface Attendance {
   student_id: string;
@@ -153,6 +162,9 @@ export interface Application {
   cohort_id: string | null;
   decided_at: string | null;
   decision_note: string | null;
+  format: Format;
+  time_zone: string | null;
+  location: string | null;
 }
 
 export interface GuardianConsent {
@@ -174,4 +186,46 @@ export interface GuardianConsent {
   media_ok: boolean;
   version: string | null;
   signed_at: string | null;
+  format: Format;
+}
+
+/** One online session (a cohort's week). A row exists only when there is something to say about that session. */
+export interface OnlineSession {
+  cohort_id: string;
+  week: number;
+  meeting_url: string | null;
+  date_override: string | null; // YYYY-MM-DD, Killeen time
+  time_override: string | null; // HH:MM:SS, Killeen time
+  canceled: boolean;
+  topic_note: string | null;
+  recording_url: string | null;
+  recording_note: string | null;
+  slides_url: string | null;
+  posted_at: string | null;
+}
+
+export interface OnlineProfile {
+  student_id: string;
+  time_zone: string;
+  location: string | null;
+  daw: string | null;
+  os: string | null;
+  interface: string | null;
+  mic: string | null;
+  headphones: string | null;
+  monitors: string | null;
+  internet: string | null;
+  setup: Record<string, boolean>;
+  setup_done_at: string | null;
+}
+
+export interface OfficeHour {
+  id: string;
+  cohort_id: string | null;
+  starts_at: string; // ISO timestamp
+  minutes: number;
+  meeting_url: string | null;
+  booked_by: string | null;
+  topic: string | null;
+  booked_at: string | null;
 }

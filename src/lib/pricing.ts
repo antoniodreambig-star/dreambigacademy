@@ -1,14 +1,64 @@
 import { daysBetween } from './schedule';
+import type { Format } from './types';
+
+export type { Format };
 
 /** Tuition: $1,500 paid in full, or $250 a month for 6 months (same total). Change these numbers here. */
 export const TUITION_CENTS = 150_000;
 export const MONTHLY_CENTS = 25_000;
 export const MONTHLY_COUNT = 6;
 
+/** Online-only course: $1,000 for the whole 3-month course. Change these numbers here. */
+export const ONLINE_TUITION_CENTS = 100_000;
+/** Online students can also pay the same total in 3 monthly payments. Set to false to offer pay-in-full only. */
+export const ONLINE_ALLOW_MONTHLY = true;
+export const ONLINE_MONTHLY_COUNT = 3;
+
+export const isFormat = (v: unknown): v is Format => v === 'in_person' || v === 'online';
+export const FORMAT_LABEL: Record<Format, string> = { in_person: 'In person', online: 'Online only' };
+
 export type Plan = 'full' | 'monthly';
 export const PLAN_LABEL: Record<Plan, string> = { full: 'Pay in full', monthly: 'Monthly' };
-export const planInstallments = (plan: Plan) => (plan === 'full' ? 1 : MONTHLY_COUNT);
 export const isPlan = (v: unknown): v is Plan => v === 'full' || v === 'monthly';
+
+export interface Terms {
+  format: Format;
+  /** Total tuition in cents. */
+  total: number;
+  /** Number of payments on the monthly plan. */
+  monthlyCount: number;
+  /** One monthly payment, rounded (the last payment absorbs any leftover cents). */
+  monthlyCents: number;
+  /** Is the monthly plan offered for this track? */
+  allowMonthly: boolean;
+  months: number;
+  /** "6 months" / "3 months" */
+  length: string;
+}
+
+/** Tuition terms for a track. Anything that isn't 'online' gets the in-person terms. */
+export function termsFor(format: Format | null | undefined): Terms {
+  if (format === 'online') {
+    return {
+      format: 'online',
+      total: ONLINE_TUITION_CENTS,
+      monthlyCount: ONLINE_MONTHLY_COUNT,
+      monthlyCents: Math.round(ONLINE_TUITION_CENTS / ONLINE_MONTHLY_COUNT),
+      allowMonthly: ONLINE_ALLOW_MONTHLY,
+      months: 3,
+      length: '3 months',
+    };
+  }
+  return { format: 'in_person', total: TUITION_CENTS, monthlyCount: MONTHLY_COUNT, monthlyCents: MONTHLY_CENTS, allowMonthly: true, months: 6, length: '6 months' };
+}
+
+export const planInstallments = (plan: Plan, format: Format | null | undefined = 'in_person') => (plan === 'full' ? 1 : termsFor(format).monthlyCount);
+
+/** "$1,000 paid in full" / "$333.33 a month for 3 months" (plan text for emails and cards). */
+export function planBlurb(plan: Plan, format: Format | null | undefined): string {
+  const t = termsFor(format);
+  return plan === 'full' ? `${money(t.total)} paid in full` : `${money(t.monthlyCents)} a month for ${t.monthlyCount} months`;
+}
 
 export const METHODS = ['square', 'cash', 'zelle', 'card', 'check', 'other'] as const;
 export type Method = (typeof METHODS)[number];

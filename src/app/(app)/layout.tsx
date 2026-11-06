@@ -31,6 +31,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isOwner = data === true;
   }
 
+  // Online-only students get their own menu (live sessions, set up, office hours).
+  let isOnline = false;
+  if (!isInstructor && profile.cohort_id) {
+    const { data: co } = await supabase.from('cohorts').select('format').eq('id', profile.cohort_id).maybeSingle();
+    isOnline = co?.format === 'online';
+  }
+
   // Items with a `group` sit under a dropdown of that name on desktop and under a heading on phones.
   const items = isInstructor
     ? [
@@ -40,6 +47,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/cohorts', label: 'Classes', group: 'Course' },
         { href: '/admin/curriculum', label: 'Curriculum', group: 'Course' },
         { href: '/admin/attendance', label: 'Attendance', group: 'Course' },
+        { href: '/admin/online', label: 'Online classes', group: 'Course' },
+        { href: '/admin/office-hours', label: 'Office hours', group: 'Course' },
         { href: '/resources', label: 'Resources', group: 'Content' },
         { href: '/videos', label: 'Videos', group: 'Content' },
         { href: '/admin/announcements', label: 'Announcements', group: 'Content' },
@@ -47,16 +56,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/payments', label: 'Payments' },
         { href: '/profile', label: 'Profile' },
       ]
-    : [
-        { href: '/home', label: 'Home' },
-        { href: '/classes', label: 'Classes', group: 'Learn' },
-        { href: '/schedule', label: 'Schedule', group: 'Learn' },
-        { href: '/resources', label: 'Resources', group: 'Learn' },
-        { href: '/videos', label: 'Videos', group: 'Learn' },
-        { href: '/messages', label: 'Messages', badge: count ?? 0 },
-        { href: '/tuition', label: 'Tuition' },
-        { href: '/profile', label: 'Profile' },
-      ];
+    : isOnline
+      ? [
+          { href: '/home', label: 'Home' },
+          { href: '/live', label: 'Live sessions', group: 'Learn' },
+          { href: '/classes', label: 'Course', group: 'Learn' },
+          { href: '/schedule', label: 'Schedule', group: 'Learn' },
+          { href: '/resources', label: 'Resources', group: 'Learn' },
+          { href: '/videos', label: 'Videos', group: 'Learn' },
+          { href: '/office-hours', label: 'Office hours' },
+          { href: '/messages', label: 'Messages', badge: count ?? 0 },
+          { href: '/setup', label: 'Set up' },
+          { href: '/tuition', label: 'Tuition' },
+          { href: '/profile', label: 'Profile' },
+        ]
+      : [
+          { href: '/home', label: 'Home' },
+          { href: '/classes', label: 'Classes', group: 'Learn' },
+          { href: '/schedule', label: 'Schedule', group: 'Learn' },
+          { href: '/resources', label: 'Resources', group: 'Learn' },
+          { href: '/videos', label: 'Videos', group: 'Learn' },
+          { href: '/messages', label: 'Messages', badge: count ?? 0 },
+          { href: '/tuition', label: 'Tuition' },
+          { href: '/profile', label: 'Profile' },
+        ];
 
   return (
     <>

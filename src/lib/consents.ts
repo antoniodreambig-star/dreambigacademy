@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendEmail, siteUrl } from '@/lib/email';
-import type { GuardianConsent } from '@/lib/types';
+import type { Format, GuardianConsent } from '@/lib/types';
 
 export const consentLink = (token: string) => `${siteUrl()}/consent/${token}`;
 
@@ -13,7 +13,7 @@ export const notifyAddress = () => process.env.ADMIN_NOTIFY_EMAIL || 'studio@dre
  */
 export async function ensureConsent(
   supabase: SupabaseClient,
-  p: { studentEmail: string; studentName: string; guardianName: string; guardianEmail: string | null; applicationId?: string | null },
+  p: { studentEmail: string; studentName: string; guardianName: string; guardianEmail: string | null; applicationId?: string | null; format?: Format },
 ): Promise<GuardianConsent | null> {
   const email = p.studentEmail.toLowerCase();
   const { data: existing } = await supabase
@@ -28,7 +28,7 @@ export async function ensureConsent(
     if (row.status === 'pending') {
       const { data } = await supabase
         .from('guardian_consents')
-        .update({ guardian_name: p.guardianName || row.guardian_name, guardian_email: p.guardianEmail || row.guardian_email, student_name: p.studentName || row.student_name })
+        .update({ guardian_name: p.guardianName || row.guardian_name, guardian_email: p.guardianEmail || row.guardian_email, student_name: p.studentName || row.student_name, ...(p.format ? { format: p.format } : {}) })
         .eq('id', row.id)
         .select('*')
         .single();
@@ -44,6 +44,7 @@ export async function ensureConsent(
       guardian_name: p.guardianName,
       guardian_email: p.guardianEmail,
       application_id: p.applicationId ?? null,
+      format: p.format ?? 'in_person',
     })
     .select('*')
     .single();
@@ -56,7 +57,7 @@ export async function sendConsentEmail(supabase: SupabaseClient, c: GuardianCons
   const ok = await sendEmail(
     c.guardian_email,
     `Parent/guardian consent needed: ${c.student_name || 'your student'} at Dream Big Academy`,
-    `Hello${c.guardian_name ? ` ${c.guardian_name}` : ''},\n\n${c.student_name || 'Your student'} has applied to the Dream Big Studios Audio Engineering Academy. Because students under 18 need a parent or guardian’s consent, please read and sign the consent form here (it takes about two minutes):\n\n${consentLink(c.token)}\n\nThis link is private to you. If you didn’t expect this email, you can ignore it.`,
+    `Hello${c.guardian_name ? ` ${c.guardian_name}` : ''},\n\n${c.student_name || 'Your student'} has applied to the ${c.format === 'online' ? 'online ' : ''}Dream Big Studios Audio Engineering Academy. Because students under 18 need a parent or guardian’s consent, please read and sign the consent form here (it takes about two minutes):\n\n${consentLink(c.token)}\n\nThis link is private to you. If you didn’t expect this email, you can ignore it.`,
   );
   if (ok) await supabase.from('guardian_consents').update({ last_sent_at: new Date().toISOString() }).eq('id', c.id);
   return ok;

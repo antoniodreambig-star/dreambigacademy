@@ -4,8 +4,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email';
 import { notifyAddress } from '@/lib/consents';
-import { isPlan } from '@/lib/pricing';
-import { todayLocal } from '@/lib/schedule';
+import { isFormat, isPlan, planBlurb, termsFor } from '@/lib/pricing';
+import { isValidTimeZone, todayLocal } from '@/lib/schedule';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
 const none = (v: string) => (v === '' ? null : v);
@@ -23,27 +23,35 @@ export async function submitApplication(f: FormData) {
   const t = Number(f.get('t'));
   if (str(f, 'company', 100) || !t || Date.now() - t < 2500) redirect('/apply?done=1');
 
+  const formatRaw = str(f, 'format', 10);
+  const format = isFormat(formatRaw) ? formatRaw : 'in_person';
+  const online = format === 'online';
+  const go = (qs: string): never => redirect(`/apply?track=${format}&${qs}`);
+
   const name = str(f, 'full_name', 120);
   const email = str(f, 'email', 200).toLowerCase();
   const phone = none(str(f, 'phone', 40));
   const birth = str(f, 'birth_date', 10);
-  if (name.length < 2) redirect('/apply?err=name');
-  if (!EMAIL.test(email)) redirect('/apply?err=email');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) redirect('/apply?err=birth');
+  if (name.length < 2) go('err=name');
+  if (!EMAIL.test(email)) go('err=email');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) go('err=birth');
 
   const today = todayLocal();
   const age = ageOn(birth, today);
-  if (birth > today || age > 110) redirect('/apply?err=birth');
-  if (age < 16) redirect('/apply?err=age');
+  if (birth > today || age > 110) go('err=birth');
+  if (age < 16) go('err=age');
   const under18 = age < 18;
 
   const gName = none(str(f, 'guardian_name', 120));
   const gEmail = none(str(f, 'guardian_email', 200).toLowerCase());
   const gPhone = none(str(f, 'guardian_phone', 40));
-  if (under18 && (!gName || !gEmail || !EMAIL.test(gEmail))) redirect('/apply?err=guardian');
+  if (under18 && (!gName || !gEmail || !EMAIL.test(gEmail))) go('err=guardian');
 
   const planRaw = str(f, 'plan', 10);
-  if (!isPlan(planRaw)) redirect('/apply?err=plan');
+  if (!isPlan(planRaw) || (planRaw === 'monthly' && !termsFor(format).allowMonthly)) go('err=plan');
+  const plan = planRaw as 'full' | 'monthly';
+  const tzRaw = str(f, 'time_zone', 64);
+  if (online && !isValidTimeZone(tzRaw)) go('err=tz');
   const cohortRaw = str(f, 'cohort_id', 40);
   const cohort = /^[0-9a-f-]{36}$/i.test(cohortRaw) ? cohortRaw : null;
 
@@ -60,20 +68,27 @@ export async function submitApplication(f: FormData) {
     experience: none(str(f, 'experience', 2000)),
     goals: none(str(f, 'goals', 2000)),
     referral: none(str(f, 'referral', 300)),
-    plan: planRaw,
+    plan,
     cohort_id: cohort,
+    format,
+    time_zone: online ? tzRaw : null,
+    location: online ? none(str(f, 'location', 120)) : null,
   });
-  if (error) redirect('/apply?err=save');
+  if (error) go('err=save');
 
   // Best-effort emails: a confirmation for the applicant and an alert for you.
   await Promise.all([
     sendEmail(
       email,
       'We got your Dream Big Academy application',
-      `Hi ${name.split(' ')[0]},\n\nThanks for applying to the Dream Big Studios Audio Engineering Academy. We read every application and will email you soon about next steps.${under18 ? '\n\nBecause you’re under 18, we’ll also email your parent or guardian a consent form to sign.' : ''}`,
+      `Hi ${name.split(' ')[0]},\n\nThanks for applying to the ${online ? 'online ' : ''}Dream Big Studios Audio Engineering Academy${online ? ' (3 months, live video sessions)' : ''}. We read every application and will email you soon about next steps.${under18 ? '\n\nBecause you’re under 18, we’ll also email your parent or guardian a consent form to sign.' : ''}`,
     ),
-    sendEmail(notifyAddress(), `New Academy application: ${name}`, `${name} (${email}${phone ? `, ${phone}` : ''}) just applied${under18 ? ' — under 18, guardian consent needed' : ''}.\n\nReview it under Applications in the Academy app.`),
+    sendEmail(
+      notifyAddress(),
+      `New ${online ? 'ONLINE ' : ''}Academy application: ${name}`,
+      `${name} (${email}${phone ? `, ${phone}` : ''}) just applied for the ${online ? `online-only course (${tzRaw}, wants ${planBlurb(plan, 'online')})` : 'in-person course'}${under18 ? ' — under 18, guardian consent needed' : ''}.\n\nReview it under Applications in the Academy app.`,
+    ),
   ]);
 
-  redirect('/apply?done=1');
+  redirect(`/apply?track=${format}&done=1`);
 }

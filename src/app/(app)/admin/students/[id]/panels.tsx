@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import PaymentForm from '@/components/PaymentFields';
 import { consentLink } from '@/lib/consents';
-import { METHOD_LABEL, MONTHLY_COUNT, PLAN_LABEL, STATE_CHIP, STATE_LABEL, TUITION_CENTS, dueSchedule, isMethod, isPlan, money, standing } from '@/lib/pricing';
+import { METHOD_LABEL, PLAN_LABEL, STATE_CHIP, STATE_LABEL, dueSchedule, isMethod, isPlan, money, standing, termsFor, type Format } from '@/lib/pricing';
 import { fmtDate } from '@/lib/schedule';
 import type { Cohort, Enrollment, GuardianConsent, Payment, Profile } from '@/lib/types';
 import { deletePayment, saveEnrollment } from '../../payments/actions';
@@ -9,8 +9,12 @@ import { requestConsent } from './consent-actions';
 
 const dateLong = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-function PlanForm({ student, enr, defaultPlan, defaultFirstDue, returnTo }: { student: Profile; enr: Enrollment | null; defaultPlan: string; defaultFirstDue: string; returnTo: string }) {
-  const plan = enr?.plan ?? (isPlan(defaultPlan) ? defaultPlan : 'monthly');
+function PlanForm({ student, enr, defaultPlan, defaultFirstDue, returnTo, format }: { student: Profile; enr: Enrollment | null; defaultPlan: string; defaultFirstDue: string; returnTo: string; format: Format }) {
+  const t = termsFor(format);
+  const wanted = enr?.plan ?? (isPlan(defaultPlan) ? defaultPlan : 'monthly');
+  // Online may be pay-in-full only; keep "monthly" available if this student is already on it.
+  const showMonthly = t.allowMonthly || enr?.plan === 'monthly';
+  const plan = wanted === 'monthly' && !showMonthly ? 'full' : wanted;
   return (
     <form action={saveEnrollment} className="stack">
       <input type="hidden" name="student_id" value={student.id} />
@@ -19,18 +23,18 @@ function PlanForm({ student, enr, defaultPlan, defaultFirstDue, returnTo }: { st
         <div>
           <label>Plan</label>
           <select name="plan" defaultValue={plan}>
-            <option value="monthly">{PLAN_LABEL.monthly}: $250 a month × {MONTHLY_COUNT}</option>
-            <option value="full">{PLAN_LABEL.full}: {money(TUITION_CENTS)}</option>
+            {showMonthly && <option value="monthly">{PLAN_LABEL.monthly}: {money(t.monthlyCents)} a month × {t.monthlyCount}</option>}
+            <option value="full">{PLAN_LABEL.full}: {money(t.total)}</option>
           </select>
         </div>
-        <div><label>Total tuition ($)</label><input name="total" type="text" inputMode="decimal" defaultValue={String((enr?.total_cents ?? TUITION_CENTS) / 100)} required /></div>
+        <div><label>Total tuition ($)</label><input name="total" type="text" inputMode="decimal" defaultValue={String((enr?.total_cents ?? t.total) / 100)} required /></div>
       </div>
       <div className="row">
         <div><label>First payment due</label><input name="first_due" type="date" defaultValue={enr?.first_due ?? defaultFirstDue} required /></div>
-        <div><label>Number of monthly payments</label><input name="installments" type="number" min={1} max={24} defaultValue={enr?.plan === 'monthly' ? enr.installments : MONTHLY_COUNT} /></div>
+        <div><label>Number of monthly payments</label><input name="installments" type="number" min={1} max={24} defaultValue={enr?.plan === 'monthly' ? enr.installments : t.monthlyCount} /></div>
       </div>
       <div><label>Note (optional, only you see this)</label><input name="note" type="text" maxLength={500} defaultValue={enr?.note ?? ''} placeholder="Sponsor, discount, scholarship…" /></div>
-      <p className="small muted" style={{ margin: 0 }}>Change the total for a discount or scholarship. “Number of monthly payments” is ignored for Pay in full.</p>
+      <p className="small muted" style={{ margin: 0 }}>{format === 'online' ? 'Online-only course. ' : ''}Change the total for a discount or scholarship. “Number of monthly payments” is ignored for Pay in full.</p>
       <button className="btn btn--sm" type="submit">{enr ? 'Update plan' : 'Set up payment plan'}</button>
     </form>
   );
@@ -40,11 +44,12 @@ export async function TuitionPanel({ supabase, student, cohort, today }: { supab
   const [{ data: e }, { data: p }, { data: inv }] = await Promise.all([
     supabase.from('enrollments').select('*').eq('student_id', student.id).maybeSingle(),
     supabase.from('payments').select('*').eq('student_id', student.id).order('paid_on', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('invites').select('plan').eq('email', student.email).maybeSingle(),
+    supabase.from('invites').select('plan, format').eq('email', student.email).maybeSingle(),
   ]);
   const enr = (e as Enrollment | null) ?? null;
   const pays = (p ?? []) as Payment[];
   const returnTo = `/admin/students/${student.id}#tuition`;
+  const format: Format = cohort ? cohort.format : inv?.format === 'online' ? 'online' : 'in_person';
   const paid = pays.reduce((a, x) => a + x.amount_cents, 0);
 
   if (!enr) {
@@ -53,7 +58,7 @@ export async function TuitionPanel({ supabase, student, cohort, today }: { supab
         <h2 className="phase" id="tuition">Tuition</h2>
         <div className="card stack">
           <p className="muted" style={{ margin: 0 }}>No payment plan yet. Set one up to start tracking payments.</p>
-          <PlanForm student={student} enr={null} defaultPlan={(inv?.plan as string) ?? 'monthly'} defaultFirstDue={cohort?.start_date ?? today} returnTo={returnTo} />
+          <PlanForm student={student} enr={null} defaultPlan={(inv?.plan as string) ?? 'monthly'} defaultFirstDue={cohort?.start_date ?? today} returnTo={returnTo} format={format} />
         </div>
       </>
     );
@@ -121,7 +126,7 @@ export async function TuitionPanel({ supabase, student, cohort, today }: { supab
 
         <details className="fold">
           <summary>Change the plan</summary>
-          <PlanForm student={student} enr={enr} defaultPlan={enr.plan} defaultFirstDue={enr.first_due} returnTo={returnTo} />
+          <PlanForm student={student} enr={enr} defaultPlan={enr.plan} defaultFirstDue={enr.first_due} returnTo={returnTo} format={format} />
         </details>
       </div>
     </>

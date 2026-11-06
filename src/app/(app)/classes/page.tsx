@@ -1,22 +1,22 @@
 import { requireProfile } from '@/lib/auth';
-import { classDate, currentWeek, fmtDate, todayLocal } from '@/lib/schedule';
-import type { Attendance, Cohort, Project, Week } from '@/lib/types';
+import { loadCurriculum, wordsFor } from '@/lib/online';
+import { classDate, courseWeeks, currentWeek, fmtDate, todayLocal } from '@/lib/schedule';
+import type { Attendance, Cohort } from '@/lib/types';
 
-const ATT = { present: ['Present', 'chip--done'], late: ['Late', 'chip--soon'], absent: ['Absent', 'chip--overdue'], excused: ['Excused', ''] } as const;
+const ATT = { present: ['Present', 'chip--done'], late: ['Late', 'chip--soon'], absent: ['Absent', 'chip--overdue'], excused: ['Excused', ''], watched: ['Watched recording', 'chip--done'] } as const;
 
 export const metadata = { title: 'Classes' };
 
 export default async function Classes() {
   const { supabase, profile } = await requireProfile();
-  const [{ data: weeks }, { data: projects }, { data: attRows }, cohortRes] = await Promise.all([
-    supabase.from('weeks').select('*').order('week'),
-    supabase.from('projects').select('*'),
+  const [{ data: attRows }, cohortRes] = await Promise.all([
     supabase.from('attendance').select('*').eq('student_id', profile.id),
     profile.cohort_id ? supabase.from('cohorts').select('*').eq('id', profile.cohort_id).single() : Promise.resolve({ data: null }),
   ]);
   const cohort = cohortRes.data as Cohort | null;
-  const W = (weeks ?? []) as Week[];
-  const P = (projects ?? []) as Project[];
+  const format = cohort?.format ?? 'in_person';
+  const { weeks: W, projects: P } = await loadCurriculum(supabase, format);
+  const words = wordsFor(format);
   const A = new Map(((attRows ?? []) as Attendance[]).map((a) => [a.week, a.status]));
   const today = todayLocal();
   const now = cohort ? currentWeek(cohort, today) : 0;
@@ -25,7 +25,11 @@ export default async function Classes() {
   return (
     <>
       <h1 className="page-title">Classes</h1>
-      <p className="sub">26 weeks. Each week has class, lab time in Studio B, and homework.</p>
+      <p className="sub">
+        {format === 'online'
+          ? `${courseWeeks(format)} weeks over 3 months. Each week has a live video session, practice on your own, and homework.`
+          : `${courseWeeks(format)} weeks. Each week has class, lab time in Studio B, and homework.`}
+      </p>
       {W.map((w) => {
         const header = w.phase !== lastPhase ? <h2 className="phase" key={`p-${w.phase}`}>{w.phase}</h2> : null;
         lastPhase = w.phase;
@@ -43,8 +47,8 @@ export default async function Classes() {
               </div>
               {w.in_class || w.lab || w.homework ? (
                 <div className="week__cols">
-                  <div><h5>In class</h5><p>{w.in_class || '—'}</p></div>
-                  <div><h5>Lab</h5><p>{w.lab || '—'}</p></div>
+                  <div><h5>{words.inClass}</h5><p>{w.in_class || '—'}</p></div>
+                  <div><h5>{words.lab}</h5><p>{w.lab || '—'}</p></div>
                   <div><h5>Homework</h5><p>{w.homework || '—'}</p></div>
                 </div>
               ) : (

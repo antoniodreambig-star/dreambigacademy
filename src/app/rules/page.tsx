@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { requireProfileRaw } from '@/lib/auth';
-import { RULES, RULES_VERSION } from '@/lib/rules';
+import { RULES, RULES_ONLINE, RULES_VERSION } from '@/lib/rules';
 import AuthShell from '@/components/AuthShell';
 import { acceptRules } from './actions';
 
@@ -14,12 +14,15 @@ const ERR: Record<string, string> = {
 };
 
 export default async function Rules({ searchParams }: { searchParams: Promise<{ err?: string; view?: string }> }) {
-  const { profile } = await requireProfileRaw();
+  const { supabase, profile } = await requireProfileRaw();
   const q = await searchParams;
   if (profile.role !== 'student') redirect('/');
   if (!profile.username) redirect('/welcome');
   const done = profile.rules_version === RULES_VERSION;
   const view = q.view === '1';
+  // Online students see the rules for live video sessions instead of the studio-floor rules.
+  const { data: co } = profile.cohort_id ? await supabase.from('cohorts').select('format').eq('id', profile.cohort_id).maybeSingle() : { data: null };
+  const rules = co?.format === 'online' ? RULES_ONLINE : RULES;
   if (done && !view) redirect('/');
 
   return (
@@ -27,12 +30,12 @@ export default async function Rules({ searchParams }: { searchParams: Promise<{ 
       <div className="card stack" style={{ maxWidth: 560 }}>
         <div>
           <p className="eyebrow">Dream Big Studios Academy</p>
-          <h1 className="page-title">Studio rules</h1>
+          <h1 className="page-title">{co?.format === 'online' ? 'Class rules' : 'Studio rules'}</h1>
           <p className="muted">{done ? 'The rules you agreed to.' : 'Please read these and sign to continue.'}</p>
         </div>
         {q.err && <div className="notice notice--err" role="alert">{ERR[q.err] ?? ERR.save}</div>}
         <ol className="rules">
-          {RULES.map((r) => (
+          {rules.map((r) => (
             <li key={r.title}><strong>{r.title}.</strong> {r.text}</li>
           ))}
         </ol>
