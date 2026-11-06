@@ -6,7 +6,7 @@ import { requireInstructor } from '@/lib/auth';
 import { emailConfigured, sendEmail, sendEmailEach, siteUrl } from '@/lib/email';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { cleanUrl } from '@/lib/online';
-import { ONLINE_WEEKS, IN_PERSON_WEEKS } from '@/lib/schedule';
+import { IN_PERSON_WEEKS } from '@/lib/schedule';
 import type { Format } from '@/lib/types';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
@@ -127,13 +127,12 @@ export async function saveNote(f: FormData) {
 
 export async function saveWeek(f: FormData) {
   const { supabase } = await requireInstructor();
-  const online = str(f, 'track', 10) === 'online';
+  // The online course is derived from the in-person weeks (two per online week), so only those are edited.
   const week = Number(f.get('week'));
-  const max = online ? ONLINE_WEEKS : IN_PERSON_WEEKS;
-  const back = `/admin/curriculum${online ? '?track=online&' : '?'}`;
-  if (!Number.isInteger(week) || week < 1 || week > max) redirect(`/admin/curriculum${online ? '?track=online' : ''}`);
+  const back = '/admin/curriculum?';
+  if (!Number.isInteger(week) || week < 1 || week > IN_PERSON_WEEKS) redirect('/admin/curriculum');
   const { error } = await supabase
-    .from(online ? 'online_weeks' : 'weeks')
+    .from('weeks')
     .update({
       title: str(f, 'title', 120) || 'Outline coming soon',
       phase: str(f, 'phase', 120),

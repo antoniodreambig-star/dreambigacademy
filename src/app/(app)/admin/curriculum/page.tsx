@@ -21,9 +21,13 @@ export default async function Curriculum({ searchParams }: { searchParams: Promi
         <Link className={`btn btn--sm ${track === 'online' ? '' : 'btn--ghost'}`} href="/admin/curriculum?track=online">Online · 13 weeks</Link>
       </p>
       <p className="sub">
-        Edit any week of the {track === 'online' ? 'online (3-month)' : 'in-person (6-month)'} course. Students see changes right away on their Classes and Schedule pages. Weeks with no homework text don’t show up as homework.
-        {track === 'online' && ' The online weeks started as a draft, so read through each one and make it yours.'}
+        {track === 'online' ? 'This is what online (3-month) students see.' : 'Edit any week of the in-person (6-month) course.'} Students see changes right away on their Classes and Schedule pages. Weeks with no homework text don’t show up as homework.
       </p>
+      {track === 'online' && (
+        <div className="notice">
+          The online course is the same course as the in-person one, in half the time: each online week covers two in-person weeks (online week 1 = in-person weeks 1 and 2, and so on). To change it, edit the in-person weeks and the online weeks update automatically.
+        </div>
+      )}
       {q.ok && <div className="notice notice--ok">Week {q.ok} saved.</div>}
       {q.err && <div className="notice notice--err">That didn’t save.</div>}
       {(weeks as Week[]).map((w) => (
@@ -32,6 +36,14 @@ export default async function Curriculum({ searchParams }: { searchParams: Promi
             <span className="week__n">Week {w.week}</span> <span className="week__title">{w.title}</span>{' '}
             <span className="small muted">{P.filter((p) => p.week === w.week).map((p) => ` · ${p.title}`)}</span>
           </summary>
+          {track === 'online' ? (
+            <div className="stack" style={{ marginTop: 14 }}>
+              <div><label>{words.inClass}</label><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{w.in_class || '—'}</p></div>
+              <div><label>{words.labLong}</label><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{w.lab || '—'}</p></div>
+              <div><label>Homework</label><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{w.homework || '—'}</p></div>
+              <p className="small muted">Covers in-person weeks {2 * w.week - 1} and {2 * w.week}. <Link href={`/admin/curriculum#w${2 * w.week - 1}`}>Edit in the in-person course</Link></p>
+            </div>
+          ) : (
           <form action={saveWeek} className="stack" style={{ marginTop: 14 }}>
             <input type="hidden" name="week" value={w.week} />
             <input type="hidden" name="track" value={track} />
@@ -45,10 +57,11 @@ export default async function Curriculum({ searchParams }: { searchParams: Promi
             <div style={{ maxWidth: 260 }}>
               <label>Homework due (days after that week’s class)</label>
               <input name="homework_due_days" type="number" min={0} max={30} defaultValue={w.homework_due_days} />
-              <p className="small muted" style={{ margin: '4px 0 0' }}>7 = next {track === 'online' ? 'session' : 'class'}. 0 = due at that {track === 'online' ? 'session' : 'class'}.</p>
+              <p className="small muted" style={{ margin: '4px 0 0' }}>7 = next class. 0 = due at that class.</p>
             </div>
             <button className="btn btn--sm" type="submit">Save week {w.week}</button>
           </form>
+          )}
         </details>
       ))}
     </>

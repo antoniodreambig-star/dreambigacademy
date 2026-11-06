@@ -45,107 +45,45 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- --------------------------------------------------- the online curriculum --
--- Same shape as public.weeks, but 13 weeks. Homework turned in by online students still goes in
--- public.submissions (week 1–13), so the homework form, audio feedback and feedback emails all work as-is.
-create table if not exists public.online_weeks (
-  week              int primary key check (week between 1 and 13),
-  phase             text not null,
-  title             text not null,
-  in_class          text not null default '',   -- shown to students as "Live session"
-  lab               text not null default '',   -- shown to students as "Practice"
-  homework          text not null default '',
-  homework_due_days int  not null default 7
-);
-create table if not exists public.online_projects (
-  key   text primary key,
-  title text not null,
-  week  int not null references public.online_weeks(week),
-  items text[] not null default '{}'
-);
-alter table public.online_weeks    enable row level security;
-alter table public.online_projects enable row level security;
-drop policy if exists ow_read  on public.online_weeks;
-create policy ow_read  on public.online_weeks for select to authenticated using (true);
-drop policy if exists ow_write on public.online_weeks;
-create policy ow_write on public.online_weeks for all    to authenticated using (public.is_instructor()) with check (public.is_instructor());
-drop policy if exists op_read  on public.online_projects;
-create policy op_read  on public.online_projects for select to authenticated using (true);
-drop policy if exists op_write on public.online_projects;
-create policy op_write on public.online_projects for all to authenticated using (public.is_instructor()) with check (public.is_instructor());
+-- The online course is the SAME course as the in-person one, in half the time: every online week
+-- covers two in-person weeks (online 1 = in-person 1+2, online 2 = 3+4 ... online 13 = 25+26).
+-- These are views over public.weeks / public.projects, so when you edit the in-person curriculum the
+-- online one updates by itself. Homework turned in by online students still goes in public.submissions
+-- (week 1-13), so the homework form, audio feedback and feedback emails all work as-is.
+do $$
+begin
+  if exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+             where n.nspname = 'public' and c.relname = 'online_weeks' and c.relkind = 'r') then
+    drop table public.online_weeks cascade;
+  end if;
+  if exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+             where n.nspname = 'public' and c.relname = 'online_projects' and c.relkind = 'r') then
+    drop table public.online_projects cascade;
+  end if;
+end $$;
 
--- A first draft of the 3-month course. Edit any week under Instructor → Curriculum → Online.
-insert into public.online_weeks (week, phase, title, in_class, lab, homework, homework_due_days) values
-(1, 'Month 1 · Pro Tools foundations', 'Welcome, how sound works and your home setup',
-  'Welcome and how the course works. How sound works: frequency, amplitude, decibels, phase. Signal flow from microphone to speakers. Room and monitoring basics for a home studio.',
-  'Finish the Get set up checklist. Open Pro Tools and make sure it plays and records audio.',
-  'Listening journal: pick 3 favorite songs and describe the low end, the vocal and the space in each (1 page). Send a 10-second test recording so we can check your setup.', 7),
-(2, 'Month 1 · Pro Tools foundations', 'The Pro Tools interface',
-  'Edit and Mix windows, track types, sessions, sample rate and bit depth, where your files live and how to back them up.',
-  'Create a session, name and color tracks, save it as a template.',
-  'Build an 8-track session template. Learn the 15 shortcuts on the handout; quick quiz next session.', 7),
-(3, 'Month 1 · Pro Tools foundations', 'Editing and arranging',
-  'Edit modes (Grid, Slip, Shuffle, Spot), the Smart Tool, clips, playlists, fades, markers.',
-  'Chop and arrange the provided beat to a grid.',
-  'Rearrange the provided 2-minute instrumental into intro / verse / hook / verse / hook / outro with clean fades.', 7),
-(4, 'Month 1 · Pro Tools foundations', 'Routing and bouncing',
-  'I/O setup, inserts, sends, aux tracks, buses, bouncing and file formats.',
-  'Build a headphone mix and an effects bus in your own session.',
-  'Project 1 due: Session Build.', 0),
-(5, 'Month 2 · Recording at home', 'Microphones and mic technique',
-  'Dynamic, condenser and ribbon mics; polar patterns; proximity effect. Getting a good sound in an untreated room: placement, blankets, reflection filters.',
-  'Record the same voice at 3 distances and in 2 spots in your room.',
-  'Write a half-page comparison of your test recordings: which position sounded best, and why.', 7),
-(6, 'Month 2 · Recording at home', 'Gain staging and clean recordings',
-  'Preamp gain, healthy levels (peaks around −10 dBFS, average near −18 dBFS), clipping, headphone mixes, monitoring latency.',
-  'Record spoken word and sung lines at correct levels; fix a clipped take.',
-  'Record 3 vocal takes and log the input level for each.', 7),
-(7, 'Month 2 · Recording at home', 'Tracking and comping vocals',
-  'Booth setup at home, pop filter, distance, punch-ins, loop record, playlists and comping. Directing an artist over video without killing the vibe.',
-  'Record and comp a lead vocal on the week 3 instrumental.',
-  'Finish a lead vocal with at least 3 playlists comped into one take, plus doubles and ad-libs.', 7),
-(8, 'Month 2 · Recording at home', 'Instruments, MIDI and remote sessions',
-  'Guitar and bass through a DI, keys, virtual instruments, MIDI editing and quantizing. Running a recording session remotely: prep, track sheets, file delivery and backups.',
-  'Record a DI guitar or bass part and a MIDI keys part.',
-  'Project 2 due: Home Recording Session.', 0),
-(9, 'Month 3 · Mix, master, portfolio', 'Mixing fundamentals',
-  'Gain balance, panning, EQ basics, subtractive vs additive EQ, building a rough mix quickly. Mixing on headphones vs speakers.',
-  'Balance and pan your Project 2 song using only faders, pan and EQ.',
-  'Deliver a rough mix of Project 2 using only faders, pan and EQ. Write 3 notes on what you would fix next.', 7),
-(10, 'Month 3 · Mix, master, portfolio', 'Dynamics and effects',
-  'Compression (threshold, ratio, attack, release), de-essing, reverb and delay for depth and space, parallel processing.',
-  'Compress a vocal two ways and compare.',
-  'Add compression and a reverb/delay send to your mix. Bounce a before and after.', 7),
-(11, 'Month 3 · Mix, master, portfolio', 'Finishing the mix',
-  'Automation, vocal rides, mix bus processing, referencing against a commercial track, checking on several speakers, getting feedback and revising.',
-  'Reference your mix against a commercial song. Make a list of differences.',
-  'Revise your mix after the in-app feedback and send version 2.', 7),
-(12, 'Month 3 · Mix, master, portfolio', 'Mastering and delivery',
-  'Mastering basics: EQ, compression, limiting, loudness targets (LUFS), file formats, metadata, and what to deliver to a client or distributor.',
-  'Master your own mix to a competitive loudness without crushing it.',
-  'Master your mix and export a WAV and an MP3.', 7),
-(13, 'Month 3 · Mix, master, portfolio', 'Portfolio and next steps',
-  'Putting together a portfolio, pricing and finding clients, building an online presence, and what to learn next. Final review of student mixes.',
-  'Final listening session of student projects.',
-  'Project 3 due: Final Mix and Master.', 0)
-on conflict (week) do nothing;
+create or replace view public.online_weeks as
+select
+  n as week,
+  case when n <= 4 then 'Month 1' when n <= 8 then 'Month 2' else 'Month 3' end as phase,
+  case
+    when coalesce(a.title, '') = coalesce(b.title, '') then coalesce(a.title, 'Outline coming soon')
+    else concat_ws(' + ', a.title, b.title)
+  end as title,
+  concat_ws(E'\n\n',
+    case when nullif(a.in_class, '') is not null then 'Part 1 (week ' || (2*n-1) || ' of the in-person course): ' || a.in_class end,
+    case when nullif(b.in_class, '') is not null then 'Part 2 (week ' || (2*n) || '): ' || b.in_class end) as in_class,
+  concat_ws(E'\n\n', nullif(a.lab, ''), nullif(b.lab, '')) as lab,
+  concat_ws(E'\n\n', nullif(a.homework, ''), nullif(b.homework, '')) as homework,
+  least(coalesce(a.homework_due_days, 7), coalesce(b.homework_due_days, 7)) as homework_due_days
+from generate_series(1, 13) n
+left join public.weeks a on a.week = 2*n-1
+left join public.weeks b on b.week = 2*n;
 
-insert into public.online_projects (key, title, week, items) values
-('o1', 'Project 1: Session Build', 4, array[
-  'An organized session: named, colored tracks, markers on every section, saved with a clear file name.',
-  'The arranged instrumental from week 3, with an aux reverb on a bus.',
-  'A 24-bit WAV and an MP3 bounce.',
-  'A photo or scan of a hand-drawn signal flow from your microphone to your headphones.']),
-('o2', 'Project 2: Home Recording Session', 8, array[
-  'Record a full song: beat or instrumental, comped lead vocal, doubles and ad-libs. Use your own voice or a friend remotely.',
-  'A completed track sheet: mics used, input levels, takes kept.',
-  'A rough mix bounce and a backed-up session folder (zipped or shared by link).',
-  'A short reflection: what went well, what to do differently next session.']),
-('o3', 'Project 3: Final Mix and Master', 13, array[
-  'A finished mix of your Project 2 song (or another song with approval): WAV and MP3.',
-  'A mastered version at a competitive loudness.',
-  'A one-page note on your mix and mastering choices.',
-  'A reference track you compared against, with a short note on what you learned.'])
-on conflict (key) do nothing;
+create or replace view public.online_projects as
+select key, title, ((week + 1) / 2) as week, items from public.projects;
+
+grant select on public.online_weeks, public.online_projects to authenticated;
 
 -- ----------------------------------------------------------- online sessions --
 -- One row per class per week, only when you have something to say about that session.
