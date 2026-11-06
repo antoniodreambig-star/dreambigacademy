@@ -13,6 +13,7 @@ export default async function AdminThread({ params }: { params: Promise<{ id: st
     supabase.from('messages').select('*').eq('thread_student_id', id).order('created_at'),
     supabase.from('profiles').select('id, full_name').eq('role', 'instructor'),
   ]);
+  const { data: owner } = await supabase.rpc('is_owner');
   await supabase.from('messages').update({ read_at: new Date().toISOString() }).eq('thread_student_id', id).eq('sender_id', id).is('read_at', null);
 
   const names: Record<string, string> = { [id]: (student.full_name as string) || (student.email as string) };
@@ -24,7 +25,7 @@ export default async function AdminThread({ params }: { params: Promise<{ id: st
       <h1 className="page-title">{(student.full_name as string) || (student.email as string)}</h1>
       <p className="sub"><Link href={`/admin/students/${id}`}>View profile and homework</Link></p>
       <div className="card">
-        <Thread threadStudentId={id} meId={profile.id} initial={(msgs ?? []) as Message[]} names={names} />
+        <Thread threadStudentId={id} meId={profile.id} initial={(msgs ?? []) as Message[]} names={names} deleteMode={owner === true ? 'all' : 'own'} />
       </div>
     </div>
   );

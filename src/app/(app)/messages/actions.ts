@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { requireProfile } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail, siteUrl } from '@/lib/email';
@@ -27,5 +28,27 @@ export async function sendMessage(threadStudentId: string, body: string): Promis
       if (st?.email) await sendEmail(st.email as string, 'New message from your Academy instructor', `${who} wrote:\n\n${text}\n\nReply: ${siteUrl()}/messages`);
     }
   }
+  return { ok: true };
+}
+
+const NO_DELETE = 'That couldn’t be deleted. You may not have permission, or the database update for deleting messages hasn’t been run yet.';
+
+/** Instructors can delete messages they sent; the main account can delete any message. The database enforces this. */
+export async function deleteMessage(id: string): Promise<{ ok: boolean; error?: string }> {
+  const { supabase, profile } = await requireProfile();
+  if (profile.role !== 'instructor') return { ok: false, error: 'Only instructors can delete messages.' };
+  const { data, error } = await supabase.from('messages').delete().eq('id', id).select('id');
+  if (error || !data?.length) return { ok: false, error: NO_DELETE };
+  revalidatePath('/', 'layout');
+  return { ok: true };
+}
+
+/** Deletes a student's whole conversation. Main account only (the database enforces this). */
+export async function deleteThread(studentId: string): Promise<{ ok: boolean; error?: string }> {
+  const { supabase, profile } = await requireProfile();
+  if (profile.role !== 'instructor') return { ok: false, error: 'Only instructors can delete messages.' };
+  const { data, error } = await supabase.from('messages').delete().eq('thread_student_id', studentId).select('id');
+  if (error || !data?.length) return { ok: false, error: NO_DELETE };
+  revalidatePath('/', 'layout');
   return { ok: true };
 }

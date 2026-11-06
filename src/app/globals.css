@@ -267,3 +267,9 @@ main.main--flush { padding-top: 0; }
   .nav__more, .nav__moremenu { display: contents; }
   .nav__morebtn { display: none; }
 }
+
+/* delete controls on messages */
+.msg__del { display: block; margin-top: 4px; font-size: 12px; opacity: .75; }
+.msg__del button { background: none; border: 0; padding: 0 8px 0 0; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; }
+.msg__del button:hover { opacity: 1; color: #ff8fab; }
+.msg:not(.msg--me) .msg__del button:hover { color: var(--coral); }
