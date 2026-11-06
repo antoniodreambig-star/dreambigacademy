@@ -313,3 +313,14 @@ main.main--flush { padding-top: 0; }
   .vhead .sub { margin-bottom: 14px; }
   .vhead__btn { width: 100%; min-height: 46px; }
 }
+
+/* grouped nav: dropdowns on desktop, headings on phones */
+.nav__grouplabel { display: none; }
+.nav__morebtn .dot { margin-left: 2px; }
+@media (min-width: 761px) {
+  .nav__group .nav__moremenu { left: 0; right: auto; }
+}
+@media (max-width: 760px) {
+  .top__in--app .nav__grouplabel { display: block; padding: 18px 0 4px; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .top__in--app .nav .nav__grouplabel:first-child { padding-top: 10px; }
+}

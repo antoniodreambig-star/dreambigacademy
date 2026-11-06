@@ -8,37 +8,49 @@ interface Item {
   href: string;
   label: string;
   badge?: number;
-  /** 'more' items sit under a "More" menu on desktop. On phones every item is in one list. */
-  group?: 'more';
+  /** Items with the same group name share a dropdown on desktop and a heading on phones. */
+  group?: string;
 }
+
+type Entry = { kind: 'link'; item: Item } | { kind: 'group'; label: string; items: Item[] };
 
 export default function Nav({ items }: { items: Item[] }) {
   const path = usePathname();
-  const [open, setOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false); // phone menu
+  const [openGroup, setOpenGroup] = useState<string | null>(null); // desktop dropdown
+  const navRef = useRef<HTMLElement>(null);
   const unread = items.reduce((n, i) => n + (i.badge ?? 0), 0);
 
-  const primary = items.filter((i) => i.group !== 'more');
-  const more = items.filter((i) => i.group === 'more');
-  const isActive = (href: string) => (href === '/home' || href === '/admin' ? path === href : path.startsWith(href));
-  const moreActive = more.some((i) => isActive(i.href));
+  // Keep the order given; a group appears where its first item is.
+  const entries: Entry[] = [];
+  for (const item of items) {
+    if (!item.group) {
+      entries.push({ kind: 'link', item });
+      continue;
+    }
+    const g = entries.find((e): e is Extract<Entry, { kind: 'group' }> => e.kind === 'group' && e.label === item.group);
+    if (g) g.items.push(item);
+    else entries.push({ kind: 'group', label: item.group, items: [item] });
+  }
+
+  const isActive = (href: string) =>
+    href === '/home' ? path === href : href === '/admin' ? path === '/admin' || path.startsWith('/admin/students') : path.startsWith(href);
 
   // Close menus after navigating, on Escape, and when clicking elsewhere.
   useEffect(() => {
     setOpen(false);
-    setMoreOpen(false);
+    setOpenGroup(null);
   }, [path]);
   useEffect(() => {
-    if (!open && !moreOpen) return;
+    if (!open && !openGroup) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setOpen(false);
-        setMoreOpen(false);
+        setOpenGroup(null);
       }
     };
     const onDown = (e: MouseEvent) => {
-      if (moreOpen && moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+      if (openGroup && navRef.current && !navRef.current.contains(e.target as Node)) setOpenGroup(null);
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('mousedown', onDown);
@@ -46,7 +58,7 @@ export default function Nav({ items }: { items: Item[] }) {
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('mousedown', onDown);
     };
-  }, [open, moreOpen]);
+  }, [open, openGroup]);
 
   const link = (i: Item) => (
     <Link key={i.href} href={i.href} aria-current={isActive(i.href) ? 'page' : undefined} className={i.href === '/profile' ? 'nav__profile' : undefined}>
@@ -74,16 +86,34 @@ export default function Nav({ items }: { items: Item[] }) {
         <span />
         {unread > 0 && !open && <i className="pubnav__pip" aria-hidden="true" />}
       </button>
-      <nav id="app-nav" className="nav" aria-label="Main" data-open={open}>
-        {primary.map(link)}
-        {more.length > 0 && (
-          <div className="nav__more" ref={moreRef} data-open={moreOpen}>
-            <button type="button" className="nav__morebtn" aria-expanded={moreOpen} aria-haspopup="true" data-active={moreActive} onClick={() => setMoreOpen((o) => !o)}>
-              More <i className="nav__chev" aria-hidden="true" />
-            </button>
-            <div className="nav__moremenu">{more.map(link)}</div>
-          </div>
-        )}
+      <nav id="app-nav" className="nav" aria-label="Main" data-open={open} ref={navRef}>
+        {entries.map((e) => {
+          if (e.kind === 'link') return link(e.item);
+          const isOpen = openGroup === e.label;
+          const badge = e.items.reduce((n, i) => n + (i.badge ?? 0), 0);
+          return (
+            <div key={e.label} className="nav__more nav__group" data-open={isOpen}>
+              <button
+                type="button"
+                className="nav__morebtn"
+                aria-expanded={isOpen}
+                aria-haspopup="true"
+                data-active={e.items.some((i) => isActive(i.href))}
+                onClick={() => setOpenGroup(isOpen ? null : e.label)}
+              >
+                {e.label}
+                {badge > 0 && (
+                  <span className="dot" aria-label={`${badge} need attention`}>
+                    {badge}
+                  </span>
+                )}
+                <i className="nav__chev" aria-hidden="true" />
+              </button>
+              <span className="nav__grouplabel" aria-hidden="true">{e.label}</span>
+              <div className="nav__moremenu">{e.items.map(link)}</div>
+            </div>
+          );
+        })}
         <form action="/auth/signout" method="post">
           <button className="signout" type="submit">
             Sign out

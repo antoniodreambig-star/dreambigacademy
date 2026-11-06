@@ -31,29 +31,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isOwner = data === true;
   }
 
+  // Items with a `group` sit under a dropdown of that name on desktop and under a heading on phones.
   const items = isInstructor
     ? [
-        { href: '/admin', label: 'Students' },
-        { href: '/admin/applications', label: 'Applications', badge: newApps },
+        { href: '/admin', label: 'Students', group: 'People' },
+        { href: '/admin/applications', label: 'Applications', badge: newApps, group: 'People' },
+        ...(isOwner ? [{ href: '/admin/instructors', label: 'Instructors', group: 'People' }] : []),
+        { href: '/admin/cohorts', label: 'Classes', group: 'Course' },
+        { href: '/admin/curriculum', label: 'Curriculum', group: 'Course' },
+        { href: '/admin/attendance', label: 'Attendance', group: 'Course' },
+        { href: '/resources', label: 'Resources', group: 'Content' },
+        { href: '/videos', label: 'Videos', group: 'Content' },
+        { href: '/admin/announcements', label: 'Announcements', group: 'Content' },
         { href: '/admin/messages', label: 'Messages', badge: count ?? 0 },
-        { href: '/admin/attendance', label: 'Attendance' },
         { href: '/admin/payments', label: 'Payments' },
-        { href: '/resources', label: 'Resources', group: 'more' as const },
-        { href: '/videos', label: 'Videos', group: 'more' as const },
-        { href: '/admin/cohorts', label: 'Classes' },
-        { href: '/admin/curriculum', label: 'Curriculum', group: 'more' as const },
-        { href: '/admin/announcements', label: 'Announcements', group: 'more' as const },
-        ...(isOwner ? [{ href: '/admin/instructors', label: 'Instructors', group: 'more' as const }] : []),
         { href: '/profile', label: 'Profile' },
       ]
     : [
         { href: '/home', label: 'Home' },
-        { href: '/classes', label: 'Classes' },
-        { href: '/schedule', label: 'Schedule' },
-        { href: '/resources', label: 'Resources' },
-        { href: '/videos', label: 'Videos' },
-        { href: '/tuition', label: 'Tuition' },
+        { href: '/classes', label: 'Classes', group: 'Learn' },
+        { href: '/schedule', label: 'Schedule', group: 'Learn' },
+        { href: '/resources', label: 'Resources', group: 'Learn' },
+        { href: '/videos', label: 'Videos', group: 'Learn' },
         { href: '/messages', label: 'Messages', badge: count ?? 0 },
+        { href: '/tuition', label: 'Tuition' },
         { href: '/profile', label: 'Profile' },
       ];
 
