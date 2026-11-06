@@ -38,7 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/profile', label: 'Profile' },
       ]
     : [
-        { href: '/', label: 'Home' },
+        { href: '/home', label: 'Home' },
         { href: '/classes', label: 'Classes' },
         { href: '/schedule', label: 'Schedule' },
         { href: '/resources', label: 'Resources' },
@@ -51,7 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <>
       <header className="top">
         <div className="wrap top__in">
-          <Link className="brand" href={isInstructor ? '/admin' : '/'}>
+          <Link className="brand" href={isInstructor ? '/admin' : '/home'}>
             Dream Big <span>Academy</span>
           </Link>
           <Link href="/profile" aria-label="Your profile" title="Your profile" style={{ marginLeft: 'auto', display: 'inline-flex' }}>

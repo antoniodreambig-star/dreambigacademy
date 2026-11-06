@@ -14,7 +14,7 @@ export default function Nav({ items }: { items: Item[] }) {
   return (
     <nav className="nav" aria-label="Main">
       {items.map((i) => {
-        const active = i.href === '/' || i.href === '/admin' ? path === i.href : path.startsWith(i.href);
+        const active = i.href === '/home' || i.href === '/admin' ? path === i.href : path.startsWith(i.href);
         return (
           <Link key={i.href} href={i.href} aria-current={active ? 'page' : undefined}>
             {i.label}

@@ -164,3 +164,14 @@ th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: v
 
 .foot { margin-top: auto; flex: none; }
 .login { flex: 1 0 auto; }
+
+/* public homepage */
+.nav .nav__apply { background: var(--coral); color: #fff; }
+.nav .nav__apply:hover { background: var(--coral-dark); color: #fff; }
+.pubhero { position: relative; color: #fff; padding: clamp(48px, 9vw, 120px) 0; background: linear-gradient(180deg, rgba(30,15,51,.55) 0%, rgba(30,15,51,.94) 100%), radial-gradient(70% 60% at 15% 0%, rgba(74,125,255,.35), transparent 60%), url(/hero.jpg) center / cover no-repeat; }
+.pubhero h1 { font-size: clamp(2.3rem, 6vw, 4.4rem); font-weight: 850; font-stretch: 125%; line-height: .98; letter-spacing: -.025em; max-width: 14ch; text-wrap: balance; }
+.pubhero p { max-width: 52ch; font-size: 18px; color: rgba(255,255,255,.88); margin: 18px 0 0; }
+.pubhero__cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+.pubhero .btn--ghost { color: #fff; border-color: rgba(255,255,255,.45); }
+.pubhero .btn--ghost:hover { background: rgba(255,255,255,.12); color: #fff; border-color: #fff; }
+.pubfacts { padding: 40px 0 8px; }

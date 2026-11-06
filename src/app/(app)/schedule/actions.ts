@@ -24,7 +24,7 @@ export async function submitHomework(formData: FormData) {
   const { error } = await supabase.from('submissions').upsert(row, { onConflict: 'student_id,week' });
   if (error) redirect(`/schedule?err=save#w${week}`);
   revalidatePath('/schedule');
-  revalidatePath('/');
+  revalidatePath('/home');
   redirect(`/schedule?ok=1#w${week}`);
 }
 
@@ -33,6 +33,6 @@ export async function undoHomework(formData: FormData) {
   const week = Number(formData.get('week'));
   await supabase.from('submissions').delete().eq('student_id', profile.id).eq('week', week);
   revalidatePath('/schedule');
-  revalidatePath('/');
+  revalidatePath('/home');
   redirect(`/schedule#w${week}`);
 }
