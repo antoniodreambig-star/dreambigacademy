@@ -204,3 +204,17 @@ main.main--flush { padding-top: 0; }
 .pubhero .btn--ghost { color: #fff; border-color: rgba(255,255,255,.45); }
 .pubhero .btn--ghost:hover { background: rgba(255,255,255,.12); color: #fff; border-color: #fff; }
 .pubfacts { padding: 40px 0 8px; }
+
+/* signed-in header: compact bar + dropdown menu on phones */
+.pubnav__pip { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--coral); border: 2px solid var(--plum); }
+@media (max-width: 760px) {
+  .top__in--app { flex-wrap: nowrap; min-height: 60px; padding: 0 20px; gap: 10px; }
+  .top__in--app .nav { display: none; position: absolute; top: 100%; left: 0; right: 0; width: auto; margin: 0; flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 0; padding: 6px 20px 16px; max-height: calc(100vh - 64px); overflow-y: auto; background: var(--plum-2); border-top: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 18px 30px rgba(30, 15, 51, 0.35); }
+  .top__in--app .nav[data-open="true"] { display: flex; }
+  .top__in--app .nav a { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0; border-radius: 0; font-size: 17px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .top__in--app .nav a:hover, .top__in--app .nav a[aria-current="page"] { background: none; color: #fff; }
+  .top__in--app .nav a[aria-current="page"] { color: #ff8fab; }
+  .top__in--app .nav form { margin-top: 14px; }
+  .top__in--app .signout { width: 100%; min-height: 46px; font-size: 16px; }
+}
+@media (max-width: 380px) { .top__in--app .brand { font-size: 16px; } }

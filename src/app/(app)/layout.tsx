@@ -50,7 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <header className="top">
-        <div className="wrap top__in">
+        <div className="wrap top__in top__in--app">
           <Link className="brand" href={isInstructor ? '/admin' : '/home'}>
             Dream Big <span>Academy</span>
           </Link>
