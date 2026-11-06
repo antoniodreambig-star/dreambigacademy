@@ -273,3 +273,23 @@ main.main--flush { padding-top: 0; }
 .msg__del button { background: none; border: 0; padding: 0 8px 0 0; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; }
 .msg__del button:hover { opacity: 1; color: #ff8fab; }
 .msg:not(.msg--me) .msg__del button:hover { color: var(--coral); }
+
+/* video library */
+.vtools { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; position: relative; }
+.vfilters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 20px; }
+.vchip { border: 1.5px solid var(--line); background: #fff; color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease); }
+.vchip:hover { border-color: var(--plum); }
+.vchip[aria-pressed="true"] { background: var(--plum); border-color: var(--plum); color: #fff; }
+.vchip small { margin-left: 7px; opacity: .7; font-weight: 700; }
+.vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+.vcard { display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--r); }
+.vthumb { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; border: 0; overflow: hidden; cursor: pointer; text-decoration: none; background: linear-gradient(135deg, var(--plum), var(--plum-2)); }
+.vthumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.vplay { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(180deg, transparent 40%, rgba(30, 15, 51, .45)); }
+.vplay i { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: rgba(217, 25, 74, .94); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); transition: transform .2s var(--ease); }
+.vplay i::before { content: ''; margin-left: 4px; border-left: 16px solid #fff; border-top: 10px solid transparent; border-bottom: 10px solid transparent; }
+.vthumb:hover .vplay i { transform: scale(1.08); }
+.vframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; background: #000; }
+.vbody { padding: 14px 16px 16px; }
+.vbody h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.vtags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
