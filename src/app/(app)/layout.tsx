@@ -24,6 +24,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     newApps = n ?? 0;
   }
 
+  // Only the owner account sees the Instructors page (false if the database update hasn't been run yet).
+  let isOwner = false;
+  if (isInstructor) {
+    const { data } = await supabase.rpc('is_owner');
+    isOwner = data === true;
+  }
+
   const items = isInstructor
     ? [
         { href: '/admin', label: 'Students' },
@@ -35,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/cohorts', label: 'Classes' },
         { href: '/admin/curriculum', label: 'Curriculum' },
         { href: '/admin/announcements', label: 'Announcements' },
+        ...(isOwner ? [{ href: '/admin/instructors', label: 'Instructors' }] : []),
         { href: '/profile', label: 'Profile' },
       ]
     : [

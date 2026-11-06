@@ -34,3 +34,11 @@ export async function requireStudent() {
   if (ctx.profile.role !== 'student') redirect('/admin');
   return ctx;
 }
+
+/** Owner = the main instructor account. Only the owner can add or remove other instructors. */
+export async function requireOwner() {
+  const ctx = await requireInstructor();
+  const { data } = await ctx.supabase.rpc('is_owner');
+  if (data !== true) redirect('/admin');
+  return ctx;
+}
