@@ -5,12 +5,20 @@ import { PLAN_LABEL, MONTHLY_CENTS, MONTHLY_COUNT, TUITION_CENTS, money } from '
 import { fmtDate } from '@/lib/schedule';
 import type { Application, Cohort, GuardianConsent } from '@/lib/types';
 import { requestConsent } from '../students/[id]/consent-actions';
-import { decideApplication, deleteApplication } from './actions';
+import { addStudent, decideApplication, deleteApplication } from './actions';
 
 export const metadata = { title: 'Applications' };
 
 const TABS: [string, string][] = [['new', 'New'], ['accepted', 'Accepted'], ['waitlist', 'Waitlist'], ['declined', 'Declined'], ['all', 'All']];
-const OK: Record<string, string> = { consent: 'Consent link sent to the guardian.', accept: 'Accepted. They’re on the invite list and can sign in.', waitlist: 'Moved to the waitlist.', decline: 'Declined.', reopen: 'Moved back to New.', deleted: 'Deleted.' };
+const OK: Record<string, string> = { consent: 'Consent link sent to the guardian.', accept: 'Accepted. They’re on the invite list and can sign in.', waitlist: 'Moved to the waitlist.', decline: 'Declined.', reopen: 'Moved back to New.', deleted: 'Deleted.', added: 'Added. You can find them under New.' };
+const ERR: Record<string, string> = {
+  name: 'Enter their full name.',
+  email: 'Enter a valid email address.',
+  dob: 'Enter the date of birth as a full date, or leave it blank.',
+  age: 'The Academy is for students 16 and older.',
+  dupe: 'Someone with that email is already on this list. Look for them under All.',
+  add: 'That didn’t save. If you haven’t yet run the database update for adding students (10_add_students.sql), run it first, then try again.',
+};
 const age = (birth: string) => {
   const t = new Date();
   const b = new Date(`${birth}T12:00:00Z`);
@@ -20,6 +28,8 @@ const age = (birth: string) => {
 export default async function Applications({ searchParams }: { searchParams: Promise<{ s?: string; ok?: string; err?: string; mail?: string }> }) {
   const { supabase } = await requireInstructor();
   const q = await searchParams;
+  const { data: ownerFlag } = await supabase.rpc('is_owner');
+  const isOwner = ownerFlag === true;
   const tab = TABS.some(([k]) => k === q.s) ? (q.s as string) : 'new';
   const [{ data: apps }, { data: cohorts }, { data: consents }] = await Promise.all([
     supabase.from('applications').select('*').order('created_at', { ascending: false }),
@@ -36,10 +46,66 @@ export default async function Applications({ searchParams }: { searchParams: Pro
   return (
     <>
       <h1 className="page-title">Applications</h1>
-      <p className="sub">People who applied on the public form. Accepting adds them to your invite list (and emails a consent link to the guardian of anyone under 18).</p>
+      <p className="sub">People who applied on the public form{isOwner ? ', plus anyone you add yourself' : ''}. Accepting adds them to your invite list (and emails a consent link to the guardian of anyone under 18).</p>
       {q.ok && OK[q.ok] && <div className="notice notice--ok">{OK[q.ok]}</div>}
       {q.mail === 'off' && <div className="notice notice--err">The email didn’t go out (email isn’t set up, or there’s no guardian email). Copy the private link and text it to them.</div>}
-      {q.err && <div className="notice notice--err">That didn’t save. Please try again.</div>}
+      {q.err && <div className="notice notice--err">{ERR[q.err] ?? 'That didn’t save. Please try again.'}</div>}
+
+
+      {isOwner && (
+        <details className="card fold" style={{ marginBottom: 16 }} open={q.err === 'name' || q.err === 'email' || q.err === 'dob' || q.err === 'age' || q.err === 'add'}>
+          <summary style={{ fontWeight: 800, cursor: 'pointer' }}>Add a student</summary>
+          <form action={addStudent} className="stack" style={{ marginTop: 14 }}>
+            <p className="small muted" style={{ margin: 0 }}>Only the main account sees this. Pick a label and they’re filed under that tab.</p>
+            <div className="row">
+              <div><label htmlFor="as-name">Full name</label><input id="as-name" name="full_name" type="text" required maxLength={120} autoComplete="off" /></div>
+              <div><label htmlFor="as-email">Email</label><input id="as-email" name="email" type="email" required autoComplete="off" /></div>
+            </div>
+            <div className="row">
+              <div><label htmlFor="as-phone">Phone (optional)</label><input id="as-phone" name="phone" type="tel" autoComplete="off" /></div>
+              <div><label htmlFor="as-dob">Date of birth (optional)</label><input id="as-dob" name="birth_date" type="date" /></div>
+            </div>
+            <div className="row">
+              <div>
+                <label htmlFor="as-label">Label</label>
+                <select id="as-label" name="label" defaultValue="waitlist">
+                  <option value="new">New (decide later)</option>
+                  <option value="waitlist">Waitlisted</option>
+                  <option value="accept">Accepted (adds them to the invite list)</option>
+                  <option value="decline">Declined</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="as-cohort">Class</label>
+                <select id="as-cohort" name="cohort_id" defaultValue="">
+                  <option value="">None yet</option>
+                  {C.map((c) => <option key={c.id} value={c.id}>{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label htmlFor="as-plan">Payment plan</label>
+              <select id="as-plan" name="plan" defaultValue="monthly">
+                <option value="monthly">Monthly: {money(MONTHLY_CENTS)} × {MONTHLY_COUNT}</option>
+                <option value="full">Pay in full: {money(TUITION_CENTS)}</option>
+              </select>
+            </div>
+            <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
+              <legend style={{ fontWeight: 700, marginBottom: 6 }}>If they’re under 18: parent or guardian (optional)</legend>
+              <div><label htmlFor="as-gn">Parent / guardian name</label><input id="as-gn" name="guardian_name" type="text" /></div>
+              <div className="row">
+                <div><label htmlFor="as-ge">Their email</label><input id="as-ge" name="guardian_email" type="email" /></div>
+                <div><label htmlFor="as-gp">Their phone</label><input id="as-gp" name="guardian_phone" type="tel" /></div>
+              </div>
+            </fieldset>
+            <div><label htmlFor="as-note">Message to include in the email (optional)</label><textarea id="as-note" name="decision_note" maxLength={2000} /></div>
+            <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 700 }}>
+              <input type="checkbox" name="notify" value="1" style={{ width: 20, height: 20 }} /> Also email them about their label (Accepted, Waitlisted or Declined)
+            </label>
+            <button className="btn" type="submit" style={{ alignSelf: 'flex-start' }}>Add student</button>
+          </form>
+        </details>
+      )}
 
       <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {TABS.map(([k, label]) => (
@@ -59,7 +125,7 @@ export default async function Applications({ searchParams }: { searchParams: Pro
                 {a.status === 'new' ? 'New' : a.status === 'accepted' ? 'Accepted' : a.status === 'waitlist' ? 'Waitlist' : 'Declined'} · applied {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
               <h2 style={{ marginBottom: 2 }}>{a.full_name} {a.under_18 && <span className="chip chip--soon">Under 18</span>}</h2>
-              <p className="muted" style={{ margin: 0 }}>{a.email}{a.phone ? ` · ${a.phone}` : ''} · age {age(a.birth_date)}</p>
+              <p className="muted" style={{ margin: 0 }}>{a.email}{a.phone ? ` · ${a.phone}` : ''}{a.birth_date ? ` · age ${age(a.birth_date)}` : ''}</p>
             </div>
 
             {a.under_18 && (

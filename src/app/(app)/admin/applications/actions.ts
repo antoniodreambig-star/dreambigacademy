@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { requireInstructor } from '@/lib/auth';
+import { requireInstructor, requireOwner } from '@/lib/auth';
 import { sendEmail, siteUrl } from '@/lib/email';
 import { ensureConsent, sendConsentEmail } from '@/lib/consents';
 import { MONTHLY_CENTS, MONTHLY_COUNT, PLAN_LABEL, TUITION_CENTS, isPlan, money } from '@/lib/pricing';
@@ -63,4 +63,73 @@ export async function deleteApplication(f: FormData) {
   revalidatePath('/admin/applications');
   revalidatePath('/', 'layout');
   redirect('/admin/applications?s=all&ok=deleted');
+}
+
+const ageOn = (birth: string) => {
+  const t = new Date();
+  const b = new Date(`${birth}T12:00:00Z`);
+  return t.getFullYear() - b.getUTCFullYear() - (t.getMonth() < b.getUTCMonth() || (t.getMonth() === b.getUTCMonth() && t.getDate() < b.getUTCDate()) ? 1 : 0);
+};
+
+/** Main account only: add a person yourself and give them a label (New, Waitlist, Accepted or Declined). */
+export async function addStudent(f: FormData) {
+  const { supabase } = await requireOwner();
+  const back = '/admin/applications';
+  const name = str(f, 'full_name', 120);
+  const email = str(f, 'email', 200).toLowerCase();
+  if (name.length < 2) redirect(`${back}?err=name`);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) redirect(`${back}?err=email`);
+
+  const dob = str(f, 'birth_date', 10);
+  let birth: string | null = null;
+  let under18 = false;
+  if (dob) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) redirect(`${back}?err=dob`);
+    const a = ageOn(dob);
+    if (a < 16) redirect(`${back}?err=age`);
+    birth = dob;
+    under18 = a < 18;
+  }
+
+  const { data: dupe } = await supabase.from('applications').select('id').eq('email', email).limit(1);
+  if (dupe && dupe.length > 0) redirect(`${back}?s=all&err=dupe`);
+
+  const planRaw = str(f, 'plan', 10);
+  const plan = isPlan(planRaw) ? planRaw : null;
+  const cohort = none(str(f, 'cohort_id', 40));
+  const { data, error } = await supabase
+    .from('applications')
+    .insert({
+      full_name: name,
+      email,
+      phone: none(str(f, 'phone', 40)),
+      birth_date: birth,
+      under_18: under18,
+      guardian_name: none(str(f, 'guardian_name', 120)),
+      guardian_email: none(str(f, 'guardian_email', 200).toLowerCase()),
+      guardian_phone: none(str(f, 'guardian_phone', 40)),
+      referral: 'Added by instructor',
+      plan,
+      cohort_id: cohort,
+    })
+    .select('id')
+    .single();
+  if (error || !data) redirect(`${back}?err=add`);
+
+  // Waitlist / Accept / Decline run through the same steps as the Decide buttons (invite list, consent link, emails).
+  const label = str(f, 'label', 10);
+  if (['accept', 'waitlist', 'decline'].includes(label)) {
+    const d = new FormData();
+    d.set('id', data.id as string);
+    d.set('decision', label);
+    if (cohort) d.set('cohort_id', cohort);
+    if (plan) d.set('plan', plan);
+    const note = str(f, 'decision_note', 2000);
+    if (note) d.set('decision_note', note);
+    if (f.get('notify') === '1') d.set('notify', '1');
+    return decideApplication(d);
+  }
+  revalidatePath(back);
+  revalidatePath('/', 'layout');
+  redirect(`${back}?s=new&ok=added`);
 }

@@ -141,7 +141,7 @@ export interface Application {
   full_name: string;
   email: string;
   phone: string | null;
-  birth_date: string;
+  birth_date: string | null;
   under_18: boolean;
   guardian_name: string | null;
   guardian_email: string | null;
