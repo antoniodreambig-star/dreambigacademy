@@ -24,12 +24,12 @@ export default async function Videos() {
 
   return (
     <>
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+      <div className="vhead">
         <div>
           <h1 className="page-title">Video Library</h1>
           <p className="sub">Extra videos to watch and train with outside of class.</p>
         </div>
-        {profile.role === 'instructor' && <Link className="btn btn--sm" href="/videos/manage">Add or manage videos</Link>}
+        {profile.role === 'instructor' && <Link className="btn btn--sm vhead__btn" href="/videos/manage">Add or manage videos</Link>}
       </div>
       <VideoLibrary videos={videos} filters={filters} />
     </>

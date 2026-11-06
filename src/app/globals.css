@@ -305,3 +305,11 @@ main.main--flush { padding-top: 0; }
 .vsearch:focus-within .vsearch__icon { color: var(--plum); }
 .vsearch__clear { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 32px; height: 32px; padding: 0 0 2px; border: 0; border-radius: 50%; background: var(--lav-2); color: var(--plum); font-size: 20px; line-height: 1; cursor: pointer; }
 .vsearch__clear:hover { background: var(--plum); color: #fff; }
+
+/* video library header */
+.vhead { display: flex; gap: 4px 16px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; }
+@media (max-width: 760px) {
+  .vhead { flex-direction: column; align-items: stretch; margin-bottom: 22px; }
+  .vhead .sub { margin-bottom: 14px; }
+  .vhead__btn { width: 100%; min-height: 46px; }
+}
