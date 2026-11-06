@@ -36,9 +36,18 @@ export default function VideoLibrary({ videos, filters }: { videos: LibVideo[]; 
   return (
     <div>
       <div className="vtools">
-        <div className="vsearch" style={{ flex: '1 1 240px', maxWidth: 360 }}>
+        <div className="vsearch">
           <label htmlFor="vq" style={{ position: 'absolute', left: -9999 }}>Search videos</label>
-          <input id="vq" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search videos…" />
+          <svg className="vsearch__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input id="vq" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search videos by title or topic" autoComplete="off" />
+          {q && (
+            <button type="button" className="vsearch__clear" onClick={() => setQ('')} aria-label="Clear search">
+              ×
+            </button>
+          )}
         </div>
       </div>
       {usable.length > 0 && (

@@ -293,3 +293,15 @@ main.main--flush { padding-top: 0; }
 .vbody { padding: 14px 16px 16px; }
 .vbody h3 { margin: 0 0 6px; font-size: 1.05rem; }
 .vtags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+
+/* video search bar */
+.vsearch { position: relative; flex: 1 1 280px; max-width: 460px; }
+.vsearch input[type=search] { display: block; width: 100%; height: 50px; margin: 0; padding: 0 46px 0 48px; font: inherit; font-size: 16px; color: var(--ink); background: #fff; border: 1.5px solid var(--line); border-radius: 999px; box-shadow: 0 2px 8px rgba(30, 15, 51, .06); -webkit-appearance: none; appearance: none; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
+.vsearch input[type=search]::placeholder { color: var(--muted); opacity: .85; }
+.vsearch input[type=search]:hover { border-color: rgba(30, 15, 51, .3); }
+.vsearch input[type=search]:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 4px rgba(74, 125, 255, .22); }
+.vsearch input[type=search]::-webkit-search-cancel-button, .vsearch input[type=search]::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.vsearch__icon { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; transition: color .2s var(--ease); }
+.vsearch:focus-within .vsearch__icon { color: var(--plum); }
+.vsearch__clear { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 32px; height: 32px; padding: 0 0 2px; border: 0; border-radius: 50%; background: var(--lav-2); color: var(--plum); font-size: 20px; line-height: 1; cursor: pointer; }
+.vsearch__clear:hover { background: var(--plum); color: #fff; }
