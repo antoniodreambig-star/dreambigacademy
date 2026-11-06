@@ -218,3 +218,52 @@ main.main--flush { padding-top: 0; }
   .top__in--app .signout { width: 100%; min-height: 46px; font-size: 16px; }
 }
 @media (max-width: 380px) { .top__in--app .brand { font-size: 16px; } }
+
+/* ===== desktop header polish (signed-in and signed-out) ===== */
+.top { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.top__avatar { display: inline-flex; margin-left: auto; text-decoration: none; }
+.top__avatar .avatar { border: 2px solid rgba(255, 255, 255, 0.28); transition: border-color .2s var(--ease); }
+.top__avatar:hover .avatar { border-color: #ff8fab; }
+.nav__morebtn, .nav__moremenu { font-family: var(--body); }
+.nav__chev { display: inline-block; width: 7px; height: 7px; margin-top: -3px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .2s var(--ease); }
+.nav__more[data-open="true"] .nav__chev { transform: rotate(-135deg); margin-top: 3px; }
+
+@media (min-width: 761px) {
+  .top .wrap { max-width: 1240px; }
+  .top__in--app, .top__in--pub { min-height: 68px; }
+  .top .brand { font-size: 19px; }
+
+  /* signed in: brand | links ........ sign out | avatar */
+  .top__in--app { gap: 14px; }
+  .top__in--app .brand { order: 1; margin-right: 10px; }
+  .top__in--app .nav { order: 2; flex: 1; flex-wrap: nowrap; gap: 2px; margin-left: 6px; }
+  .top__in--app .top__avatar { order: 3; margin-left: 0; }
+  .top__in--app .nav a, .nav__morebtn { position: relative; padding: 9px 13px; font-size: 14.5px; transition: background .2s var(--ease), color .2s var(--ease); }
+  .top__in--app .nav a[aria-current="page"]::after { content: ''; position: absolute; left: 13px; right: 13px; bottom: 3px; height: 2px; border-radius: 2px; background: #ff8fab; }
+  .top__in--app .nav .nav__profile { display: none; }
+  .top__in--app .nav form { margin-left: auto; }
+  .signout { padding: 7px 16px; transition: background .2s var(--ease), border-color .2s var(--ease); }
+  .signout:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.55); }
+
+  .nav__more { position: relative; }
+  .nav__morebtn { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: none; color: rgba(255, 255, 255, 0.82); font-weight: 700; cursor: pointer; }
+  .nav__morebtn:hover, .nav__morebtn[aria-expanded="true"], .nav__morebtn[data-active="true"] { background: rgba(255, 255, 255, 0.12); color: #fff; }
+  .nav__moremenu { display: none; position: absolute; top: calc(100% + 12px); right: 0; z-index: 30; min-width: 220px; flex-direction: column; gap: 2px; padding: 8px; background: var(--plum-2); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; box-shadow: 0 20px 44px rgba(30, 15, 51, 0.45); }
+  .nav__more[data-open="true"] .nav__moremenu { display: flex; }
+  .top__in--app .nav__moremenu a { border-radius: 10px; padding: 11px 14px; }
+  .top__in--app .nav__moremenu a[aria-current="page"]::after { display: none; }
+
+  /* signed out */
+  .pubnav { gap: 2px; }
+  .pubnav a { transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease); }
+  .pubnav .pubnav__login { margin-left: 8px; padding: 8px 18px; border: 1.5px solid rgba(255, 255, 255, 0.35); color: #fff; }
+  .pubnav .pubnav__login:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.6); }
+  .pubnav .pubnav__apply { margin-left: 8px; padding: 9px 22px; box-shadow: 0 6px 18px rgba(217, 25, 74, 0.35); }
+}
+
+/* on phones the "More" items are part of the one list */
+@media (max-width: 760px) {
+  .top__avatar { margin-left: auto; }
+  .nav__more, .nav__moremenu { display: contents; }
+  .nav__morebtn { display: none; }
+}

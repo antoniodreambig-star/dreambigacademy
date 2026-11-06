@@ -38,11 +38,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: '/admin/messages', label: 'Messages', badge: count ?? 0 },
         { href: '/admin/attendance', label: 'Attendance' },
         { href: '/admin/payments', label: 'Payments' },
-        { href: '/resources', label: 'Resources' },
+        { href: '/resources', label: 'Resources', group: 'more' as const },
         { href: '/admin/cohorts', label: 'Classes' },
-        { href: '/admin/curriculum', label: 'Curriculum' },
-        { href: '/admin/announcements', label: 'Announcements' },
-        ...(isOwner ? [{ href: '/admin/instructors', label: 'Instructors' }] : []),
+        { href: '/admin/curriculum', label: 'Curriculum', group: 'more' as const },
+        { href: '/admin/announcements', label: 'Announcements', group: 'more' as const },
+        ...(isOwner ? [{ href: '/admin/instructors', label: 'Instructors', group: 'more' as const }] : []),
         { href: '/profile', label: 'Profile' },
       ]
     : [
@@ -62,7 +62,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link className="brand" href={isInstructor ? '/admin' : '/home'}>
             Dream Big <span>Academy</span>
           </Link>
-          <Link href="/profile" aria-label="Your profile" title="Your profile" style={{ marginLeft: 'auto', display: 'inline-flex' }}>
+          <Link href="/profile" aria-label="Your profile" title="Your profile" className="top__avatar">
             <Avatar name={profile.full_name} url={profile.avatar_url} small />
           </Link>
           <Nav items={items} />
