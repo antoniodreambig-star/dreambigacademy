@@ -9,7 +9,7 @@
 export const CONSENT_VERSION = '2026-11';
 
 export const PROGRAM_SUMMARY =
-  'The Dream Big Studios Audio Engineering Academy is an in-person course at Dream Big Studios (1507 W Stan Schleuter Loop, Suite 101, Killeen, TX). ' +
+  'The Dream Big Studios Audio Engineering Academy is an in-person course at Dream Big Studios (1507 W Stan Schlueter Loop, Suite 101, Killeen, TX). ' +
   'Students meet for one three-hour class each week for about six months to learn recording, mixing and mastering in Pro Tools, ' +
   'with homework and hands-on lab time in the studio.';
 

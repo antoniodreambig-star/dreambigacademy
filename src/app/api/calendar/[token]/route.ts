@@ -96,7 +96,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
         `DTEND;TZID=America/Chicago:${compact(d)}T${hh(endMin)}`,
         fold(`SUMMARY:Academy Week ${w.week}: ${esc(w.title)}`),
         fold(`DESCRIPTION:${esc(`In class: ${w.in_class || 'Outline coming soon'}\nLab: ${w.lab || '-'}`)}`),
-        'LOCATION:Dream Big Studios\\, 1507 W Stan Schleuter Loop\\, Suite 101\\, Killeen\\, TX 76549',
+        'LOCATION:Dream Big Studios\\, 1507 W Stan Schlueter Loop\\, Suite 101\\, Killeen\\, TX 76549',
         'END:VEVENT',
       );
     }

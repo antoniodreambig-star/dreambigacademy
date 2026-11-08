@@ -324,3 +324,19 @@ main.main--flush { padding-top: 0; }
   .top__in--app .nav__grouplabel { display: block; padding: 18px 0 4px; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
   .top__in--app .nav .nav__grouplabel:first-child { padding-top: 10px; }
 }
+
+/* public SEO pages */
+.pubsection { padding: 36px 0 8px; }
+.pubsection h2 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); font-weight: 850; margin-bottom: 14px; }
+.pubsection h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 6px; }
+.pubsection p { max-width: 70ch; }
+.pubsection__img { width: 100%; height: auto; border-radius: var(--r-lg); display: block; }
+.checklist { list-style: none; margin: 0 0 1em; padding: 0; display: grid; gap: 8px; }
+.checklist li { padding-left: 28px; position: relative; }
+.checklist li::before { content: ""; position: absolute; left: 0; top: .5em; width: 14px; height: 8px; border-left: 3px solid var(--green); border-bottom: 3px solid var(--green); transform: rotate(-45deg) translateY(-50%); }
+.faq { display: grid; gap: 10px; }
+.faq__item { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); padding: 0 18px; }
+.faq__item summary { cursor: pointer; font-weight: 800; padding: 16px 0; list-style-position: outside; }
+.faq__item p { margin: 0 0 16px; color: var(--muted); }
+.crumbs { font-size: 14px; color: rgba(255,255,255,.75); margin: 0 0 14px; }
+.crumbs a { color: #ff8fab; }

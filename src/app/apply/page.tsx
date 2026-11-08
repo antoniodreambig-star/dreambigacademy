@@ -8,7 +8,9 @@ import type { Cohort, Format } from '@/lib/types';
 import { submitApplication } from './actions';
 
 export const metadata = {
-  title: 'Apply · Dream Big Academy',
+  title: 'Apply to the Audio Engineering Academy in Killeen, TX',
+  alternates: { canonical: '/apply' },
+  robots: { index: true, follow: true },
   description: 'Apply to the Dream Big Studios Audio Engineering Academy: recording, mixing and mastering in Pro Tools. Six months in person in Killeen, TX, or three months online. Ages 16+.',
   // The card people see when the apply link is shared. Image: public/share-apply.png.
   openGraph: {
