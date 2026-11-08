@@ -88,23 +88,33 @@ export default async function Landing() {
           </div>
         </section>
 
-        <section className="pubsection">
+        <section className="modband" id="modules">
           <div className="wrap">
-            <h2>Three modules. Take one, or all three over time.</h2>
-            <p>Together the modules teach the full path of a song, from the first microphone to the finished master, using Pro Tools, the software used in professional studios. Each module is its own short course: you sign up and pay for one at a time, and you never have to take the others.</p>
-            <div className="grid grid--3" style={{ marginTop: 16 }}>
+            <div className="modband__head">
+              <p className="modband__eyebrow">The curriculum</p>
+              <h2>Three modules. Take one, or all three over time.</h2>
+              <p>Together the modules teach the full path of a song, from the first microphone to the finished master, using Pro Tools, the software used in professional studios. Each module is its own short course: you sign up and pay for one at a time, and you never have to take the others.</p>
+            </div>
+            <div className="modgrid">
               {MODULE_KEYS.map((k) => (
-                <div className="card module-card" key={k}>
-                  <p className="eyebrow">Module {MODULES[k].letter} · {inP.length}</p>
+                <article className="mod" key={k}>
+                  <div className="mod__top">
+                    <span className="mod__letter" aria-hidden="true">{MODULES[k].letter}</span>
+                    <span className="mod__tag">Standalone · {inP.length}</span>
+                  </div>
+                  <p className="mod__kicker">Module {MODULES[k].letter}</p>
                   <h3>{MODULES[k].name}</h3>
-                  <p className="muted">{MODULES[k].blurb}</p>
-                  <ul className="checklist">{MODULES[k].topics.map((tp) => <li key={tp}>{tp}</li>)}</ul>
-                  <p className="small muted module-card__price">{money(inP.total)} in person · {money(onl.total)} online</p>
-                  <Link className="btn btn--sm" href={`/apply?track=in_person&module=${k}`}>Apply for Module {MODULES[k].letter}</Link>
-                </div>
+                  <p className="mod__blurb">{MODULES[k].blurb}</p>
+                  <ul className="mod__topics">{MODULES[k].topics.map((tp) => <li key={tp}>{tp}</li>)}</ul>
+                  <dl className="mod__prices">
+                    <div><dt>In person</dt><dd>{money(inP.total)}</dd></div>
+                    <div><dt>Online</dt><dd>{money(onl.total)}</dd></div>
+                  </dl>
+                  <Link className="btn" href={`/apply?track=in_person&module=${k}`}>Apply for Module {MODULES[k].letter}</Link>
+                </article>
               ))}
             </div>
-            <p style={{ marginTop: 16 }}>Every week has a class, homework and projects. The instructor reviews your work and gives you feedback, and you can message him inside the student portal.</p>
+            <p className="modband__foot">Every week has a class, homework and projects. The instructor reviews your work and gives you feedback, and you can message him inside the student portal.</p>
           </div>
         </section>
 
