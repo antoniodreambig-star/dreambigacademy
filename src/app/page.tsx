@@ -94,12 +94,12 @@ export default async function Landing() {
             <p>Together the modules teach the full path of a song, from the first microphone to the finished master, using Pro Tools, the software used in professional studios. Each module is its own short course: you sign up and pay for one at a time, and you never have to take the others.</p>
             <div className="grid grid--3" style={{ marginTop: 16 }}>
               {MODULE_KEYS.map((k) => (
-                <div className="card" key={k}>
+                <div className="card module-card" key={k}>
                   <p className="eyebrow">Module {MODULES[k].letter} · {inP.length}</p>
                   <h3>{MODULES[k].name}</h3>
                   <p className="muted">{MODULES[k].blurb}</p>
                   <ul className="checklist">{MODULES[k].topics.map((tp) => <li key={tp}>{tp}</li>)}</ul>
-                  <p className="small muted">{money(inP.total)} in person · {money(onl.total)} online</p>
+                  <p className="small muted module-card__price">{money(inP.total)} in person · {money(onl.total)} online</p>
                   <Link className="btn btn--sm" href={`/apply?track=in_person&module=${k}`}>Apply for Module {MODULES[k].letter}</Link>
                 </div>
               ))}

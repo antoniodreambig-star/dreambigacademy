@@ -76,7 +76,7 @@ export default function OnlineCourse() {
             <h2>The three online modules</h2>
             <div className="grid grid--3" style={{ marginBottom: 16 }}>
               {MODULE_KEYS.map((k) => (
-                <div className="card" key={k}>
+                <div className="card module-card" key={k}>
                   <p className="eyebrow">Module {MODULES[k].letter} · {o.length}</p>
                   <h3>{MODULES[k].name}</h3>
                   <p className="muted">{MODULES[k].blurb}</p>

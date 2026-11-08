@@ -354,3 +354,9 @@ main.main--flush { padding-top: 0; }
 @media (prefers-reduced-motion: reduce) { .faq__item summary, .faq__icon, .faq__icon::before, .faq__icon::after { transition: none; } }
 .crumbs { font-size: 14px; color: rgba(255,255,255,.75); margin: 0 0 14px; }
 .crumbs a { color: #ff8fab; }
+
+/* module cards: equal height, with the Apply button pinned to the bottom */
+.module-card { display: flex; flex-direction: column; align-items: flex-start; }
+.module-card .btn { margin-top: auto; }
+.module-card__price { margin-top: auto; }
+.module-card__price + .btn { margin-top: 4px; }
