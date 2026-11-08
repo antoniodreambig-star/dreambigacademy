@@ -6,7 +6,7 @@
  * NOTE: this is a plain-language template, not legal advice. Have a Texas attorney review it (especially the
  * risk, medical and media sections) before you rely on it.
  */
-export const CONSENT_VERSION = '2026-11b';
+export const CONSENT_VERSION = '2026-11c';
 
 export const PROGRAM_SUMMARY =
   'The Dream Big Studios Audio Engineering Academy offers standalone in-person modules at Dream Big Studios (1507 W Stan Schlueter Loop, Suite 101, Killeen, TX). ' +
@@ -46,7 +46,7 @@ export const MEDIA_RELEASE =
 /** The same consent, worded for the ONLINE-only modules (students join live video sessions from home). */
 export const PROGRAM_SUMMARY_ONLINE =
   'The Dream Big Studios Audio Engineering Academy offers standalone online modules taught over live video from Dream Big Studios (Killeen, TX). ' +
-  'In the module the student signs up for, they join about four live sessions to learn recording, mixing and mastering in Pro Tools, watch recordings of the sessions, do homework on their own equipment, and can book one-on-one office hours with their instructor.';
+  'In the module the student signs up for, they join the in-person class live on video, one three-hour class each week for about eight weeks, to learn recording, mixing and mastering in Pro Tools, watch recordings of the sessions, do homework on their own equipment, and can book one-on-one office hours with their instructor.';
 
 export const CONSENT_TERMS_ONLINE: { title: string; text: string }[] = [
   {

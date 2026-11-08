@@ -48,12 +48,12 @@ export const MODULES: Record<ModuleKey, ModuleInfo> = {
  * Which curriculum weeks each module covers. These are the week numbers in the Curriculum tables, which
  * stay numbered across the whole course, so a student's homework and attendance keep their week numbers
  * if they take Module B after Module A.
- *   In person: 8 weekly classes per module.   Online: 4 live sessions per module (each online session
- *   covers two in-person weeks, same as before).
+ *   8 weekly classes per module. Online students watch the same in-person class streamed live, so the
+ *   online track uses the same weeks.
  */
 export const MODULE_SPAN: Record<Format, Record<ModuleKey, { first: number; last: number }>> = {
   in_person: { a: { first: 1, last: 8 }, b: { first: 9, last: 16 }, c: { first: 17, last: 24 } },
-  online: { a: { first: 1, last: 4 }, b: { first: 5, last: 8 }, c: { first: 9, last: 12 } },
+  online: { a: { first: 1, last: 8 }, b: { first: 9, last: 16 }, c: { first: 17, last: 24 } },
 };
 
 /**

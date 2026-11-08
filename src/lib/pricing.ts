@@ -16,9 +16,9 @@ export const TUITION_CENTS = 49_500;
 export const MONTHLY_COUNT = 2;
 export const MONTHLY_CENTS = Math.round(TUITION_CENTS / MONTHLY_COUNT);
 
-/** Online: one module = 4 live video sessions. Paid in full. */
+/** Online: one module = the same 8 weekly three-hour classes, streamed live (24 hours). Paid in full. */
 export const ONLINE_TUITION_CENTS = 32_500;
-/** Online students can also pay in monthly payments. Off, because an online module is only four weeks. */
+/** Online students can also pay in monthly payments. Off for now: online modules are paid in full. */
 export const ONLINE_ALLOW_MONTHLY = false;
 export const ONLINE_MONTHLY_COUNT = 1;
 
@@ -40,9 +40,9 @@ export interface Terms {
   /** Is the monthly plan offered for this track? */
   allowMonthly: boolean;
   months: number;
-  /** "8 weeks" / "4 weeks": how long ONE module runs. */
+  /** "8 weeks": how long ONE module runs (same in person and online). */
   length: string;
-  /** Classes in one module (8 in person, 4 online live sessions). */
+  /** Classes in one module (8, in person or streamed live online). */
   classes: number;
 }
 
@@ -56,8 +56,8 @@ export function termsFor(format: Format | null | undefined): Terms {
       monthlyCents: Math.round(ONLINE_TUITION_CENTS / ONLINE_MONTHLY_COUNT),
       allowMonthly: ONLINE_ALLOW_MONTHLY,
       months: 1,
-      length: '4 weeks',
-      classes: 4,
+      length: '8 weeks',
+      classes: 8,
     };
   }
   return { format: 'in_person', total: TUITION_CENTS, monthlyCount: MONTHLY_COUNT, monthlyCents: MONTHLY_CENTS, allowMonthly: true, months: 2, length: '8 weeks', classes: 8 };

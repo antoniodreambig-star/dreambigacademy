@@ -56,7 +56,7 @@ export async function saveSession(f: FormData) {
   // Optional email to everyone in the class, in each student's own time zone.
   let mail = '';
   if (f.get('notify') === '1') {
-    const { data: wk } = await supabase.from('online_weeks').select('title').eq('week', week).maybeSingle();
+    const { data: wk } = await supabase.from('weeks').select('title').eq('week', week).maybeSingle();
     const title = (wk?.title as string | undefined) ?? '';
     const newRecording = !!row.recording_url && row.recording_url !== (prev?.recording_url ?? null);
     const nowCanceled = row.canceled && !prev?.canceled;

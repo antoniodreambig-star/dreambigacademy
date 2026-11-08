@@ -93,9 +93,9 @@ export function hasHomework(w: Week): boolean {
   return w.homework.trim().length > 0;
 }
 
-/** Whole-curriculum length (26 in-person weeks, 13 online). Classes now run one 8-week (online: 4-week) module at a time; see weekSpan(). */
+/** Whole-curriculum length (26 weeks). Online is the in-person class streamed live, so it has the same weeks. Classes run one 8-week module at a time; see weekSpan(). */
 export const IN_PERSON_WEEKS = 26;
-export const ONLINE_WEEKS = 13;
+export const ONLINE_WEEKS = IN_PERSON_WEEKS;
 export const courseWeeks = (format: Format | null | undefined): number => (format === 'online' ? ONLINE_WEEKS : IN_PERSON_WEEKS);
 
 

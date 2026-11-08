@@ -18,14 +18,14 @@ export default async function Curriculum({ searchParams }: { searchParams: Promi
       <h1 className="page-title">Curriculum</h1>
       <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <Link className={`btn btn--sm ${track === 'in_person' ? '' : 'btn--ghost'}`} href="/admin/curriculum">In person · 26 weeks</Link>
-        <Link className={`btn btn--sm ${track === 'online' ? '' : 'btn--ghost'}`} href="/admin/curriculum?track=online">Online · 13 weeks</Link>
+        <Link className={`btn btn--sm ${track === 'online' ? '' : 'btn--ghost'}`} href="/admin/curriculum?track=online">Online · same weeks, streamed live</Link>
       </p>
       <p className="sub">
-        {track === 'online' ? 'This is what online (3-month) students see.' : 'Edit any week of the in-person (6-month) course.'} Students see changes right away on their Classes and Schedule pages. Weeks with no homework text don’t show up as homework.
+        {track === 'online' ? 'This is what online students see.' : 'Edit any week of the course. Each module is 8 of these weeks (A = 1–8, B = 9–16, C = 17–24).'} Students see changes right away on their Classes and Schedule pages. Weeks with no homework text don’t show up as homework.
       </p>
       {track === 'online' && (
         <div className="notice">
-          The online course is the same course as the in-person one, in half the time: each online week covers two in-person weeks (online week 1 = in-person weeks 1 and 2, and so on). To change it, edit the in-person weeks and the online weeks update automatically.
+          Online students watch the in-person class streamed live, so they get exactly the same weeks, homework and due dates. To change it, edit the in-person weeks.
         </div>
       )}
       {q.ok && <div className="notice notice--ok">Week {q.ok} saved.</div>}
@@ -41,7 +41,7 @@ export default async function Curriculum({ searchParams }: { searchParams: Promi
               <div><label>{words.inClass}</label><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{w.in_class || '—'}</p></div>
               <div><label>{words.labLong}</label><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{w.lab || '—'}</p></div>
               <div><label>Homework</label><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{w.homework || '—'}</p></div>
-              <p className="small muted">Covers in-person weeks {2 * w.week - 1} and {2 * w.week}. <Link href={`/admin/curriculum#w${2 * w.week - 1}`}>Edit in the in-person course</Link></p>
+              <p className="small muted"><Link href={`/admin/curriculum#w${w.week}`}>Edit in the in-person course</Link></p>
             </div>
           ) : (
           <form action={saveWeek} className="stack" style={{ marginTop: 14 }}>

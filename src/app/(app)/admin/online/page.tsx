@@ -35,7 +35,7 @@ export default async function OnlineAdmin({ searchParams }: { searchParams: Prom
 
   const cohort = C.find((c) => c.id === q.cohort) ?? C.find((c) => c.active) ?? C[0];
   const [{ data: weeks }, { data: ovs }, { data: students }, { data: ops }] = await Promise.all([
-    supabase.from('online_weeks').select('*').order('week'),
+    supabase.from('weeks').select('*').order('week'),
     supabase.from('online_sessions').select('*').eq('cohort_id', cohort.id),
     supabase.from('profiles').select('*').eq('role', 'student').eq('cohort_id', cohort.id).order('full_name'),
     supabase.from('online_profiles').select('*'),

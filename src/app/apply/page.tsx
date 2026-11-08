@@ -109,7 +109,7 @@ export default async function Apply({ searchParams }: { searchParams: Promise<{ 
           <h1 className="page-title">Apply to the Academy</h1>
           <p className="muted">
             {online
-              ? `A four-week online module in recording, mixing and mastering with Pro Tools: four live video sessions, with recordings, office hours and feedback on your homework. You’ll need a computer, Pro Tools, a microphone and headphones. Each module stands on its own. Students must be 16 or older.`
+              ? `An eight-week online module in recording, mixing and mastering with Pro Tools: you join the in-person class live on video, one three-hour class a week, with recordings, office hours and feedback on your homework. You’ll need a computer, Pro Tools, a microphone and headphones. Each module stands on its own. Students must be 16 or older.`
               : `An eight-week, in-person module in recording, mixing and mastering with Pro Tools: one three-hour class a week at the studio in Killeen, TX. Each module stands on its own. Students must be 16 or older.`}
           </p>
           <p className="small" style={{ margin: 0 }}><Link href="/apply">{online ? 'Looking for the in-person modules?' : 'Looking for the online modules?'}</Link></p>

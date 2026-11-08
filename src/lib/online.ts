@@ -2,9 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Cohort, Format, OnlineProfile, OnlineSession, Project, Week } from './types';
 import { sessionTimes, weeksFor, type SessionTimes } from './schedule';
 
-/** Which curriculum tables belong to a track. Online students' homework still lives in `submissions`. */
-export const weeksTable = (format: Format | null | undefined) => (format === 'online' ? 'online_weeks' : 'weeks');
-export const projectsTable = (format: Format | null | undefined) => (format === 'online' ? 'online_projects' : 'projects');
+/**
+ * Which curriculum tables belong to a track. Online classes are the in-person class streamed live, so both
+ * tracks use the same weeks and projects. (The old online_weeks / online_projects views are no longer used.)
+ */
+export const weeksTable = (_format?: Format | null) => 'weeks' as const;
+export const projectsTable = (_format?: Format | null) => 'projects' as const;
 
 /** The curriculum for a track. Pass the student's class to get only the weeks of their module. */
 export async function loadCurriculum(supabase: SupabaseClient, format: Format | null | undefined, cohort?: Pick<Cohort, 'format' | 'module'> | null): Promise<{ weeks: Week[]; projects: Project[] }> {

@@ -36,7 +36,7 @@ export interface Cohort {
   class_start: string; // HH:MM:SS (Killeen time)
   class_hours: number;
   active: boolean;
-  /** 'online' = the online-only track: 13 weeks of live video sessions. */
+  /** 'online' = the online-only track: the in-person class streamed live, same weeks. */
   format: Format;
   /** Which standalone module this class teaches (A, B or C). null = an older full-course class. */
   module: ModuleKey | null;
