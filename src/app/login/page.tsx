@@ -105,9 +105,9 @@ export default function Login() {
           </form>
         ) : (
           <form onSubmit={verify} className="stack">
-            <div className="notice notice--ok">Check your email. Tap the link, or type the 6-digit code below.</div>
+            <div className="notice notice--ok">Check your email. Tap the link, or type the numeric code from the email below.</div>
             <div>
-              <label htmlFor="code">6-digit code</label>
+              <label htmlFor="code">Numeric code from your email</label>
               <input id="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" required value={code} onChange={(e) => setCode(e.target.value)} type="text" />
             </div>
             <button className="btn" disabled={busy} type="submit" style={{ width: '100%' }}>
