@@ -41,6 +41,11 @@ export default function Nav({ items }: { items: Item[] }) {
     setOpen(false);
     setOpenGroup(null);
   }, [path]);
+  // While the phone menu is open, stop the page behind it from scrolling.
+  useEffect(() => {
+    document.body.classList.toggle('menu-open', open);
+    return () => document.body.classList.remove('menu-open');
+  }, [open]);
   useEffect(() => {
     if (!open && !openGroup) return;
     const onKey = (e: KeyboardEvent) => {
