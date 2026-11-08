@@ -11,7 +11,7 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
   const first = (profile.full_name || '').split(' ')[0] || 'there';
   const nowIso = new Date().toISOString();
   const [{ data: weeks }, { data: subs }, { data: ovs }, { data: op }, { data: att }, { data: anns }, { data: oh }] = await Promise.all([
-    supabase.from('online_weeks').select('*').order('week'),
+    supabase.from('weeks').select('*').order('week'),
     supabase.from('submissions').select('*').eq('student_id', profile.id),
     supabase.from('online_sessions').select('*').eq('cohort_id', cohort.id),
     supabase.from('online_profiles').select('*').eq('student_id', profile.id).maybeSingle(),

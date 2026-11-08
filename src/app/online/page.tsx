@@ -87,7 +87,7 @@ export default function OnlineCourse() {
             <p>Each module is its own short course. You sign up and pay for one at a time, and you never have to take the others.</p>
             <h2>How the online modules work</h2>
             <ul className="checklist">
-              <li>{o.classes} live video sessions with the instructor in each module</li>
+              <li>{o.classes} weekly classes in each module: the in-person class at the studio, streamed live to you</li>
               <li>Recordings of every session, so you can watch again</li>
               <li>Office hours for questions</li>
               <li>Homework and projects with personal feedback</li>

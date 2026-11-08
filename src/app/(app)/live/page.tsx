@@ -19,7 +19,7 @@ export default async function Live({ searchParams }: { searchParams: Promise<{ o
   const { supabase, profile, cohort } = await requireOnlineStudent();
   const q = await searchParams;
   const [{ data: weeks }, { data: ovs }, { data: op }, { data: att }] = await Promise.all([
-    supabase.from('online_weeks').select('week,title,phase').order('week'),
+    supabase.from('weeks').select('week,title,phase').order('week'),
     supabase.from('online_sessions').select('*').eq('cohort_id', cohort.id),
     supabase.from('online_profiles').select('*').eq('student_id', profile.id).maybeSingle(),
     supabase.from('attendance').select('*').eq('student_id', profile.id),

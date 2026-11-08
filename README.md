@@ -99,6 +99,8 @@ Emails use Resend like the rest of the app. If it isn't configured, nothing brea
 
 ## Online-only students (added Nov 2026)
 
+> **Update (Nov 2026):** online is now the in-person class **streamed live**: each online module is the same 8 weekly three-hour classes as in person (24 classroom hours), with the same weeks, homework and due dates. The online curriculum reads the in-person `weeks` and `projects` tables directly; the old half-time `online_weeks` / `online_projects` views are no longer used. Create each online class with the same weekday, start time and 3-hour length as the in-person class it streams. The notes below describe the original 13-week online track.
+
 A second track for students who attend remotely: **$1,000 for the full course, 3 months (13 weeks)**. Everything is per class: a class is either *in person* or *online*, and its students automatically get the online experience.
 
 **What online students get.** Their own Home (setup checklist, next live session with a Join button in their own time zone, homework, recordings to catch up on, office hours, announcements), **Live sessions** (join links, recordings, slides, "I watched this"), **Set up** (time zone, equipment checklist), **Office hours** (book/cancel slots), the 13-week **Course**, **Schedule**, **Tuition** (online price and plan), and class rules and guardian-consent wording written for remote learning. Reminders and the calendar feed use the student's time zone.

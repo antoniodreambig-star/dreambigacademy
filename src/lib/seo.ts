@@ -83,7 +83,7 @@ export function faqOnline(): Faq[] {
     },
     {
       q: 'How do the online classes work?',
-      a: `Each module has ${o.classes} live video sessions. Every session is recorded so you can watch it again, and you can use office hours and send homework for feedback.`,
+      a: `You join the in-person class at the studio, streamed live: one three-hour class a week, ${o.classes} classes per module. Every session is recorded so you can watch it again, and you can use office hours and send homework for feedback.`,
     },
     {
       q: 'How much does an online module cost?',

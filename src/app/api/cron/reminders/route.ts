@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     admin.from('cohorts').select('*').eq('active', true),
     admin.from('profiles').select('*').eq('role', 'student'),
     admin.from('weeks').select('*').order('week'),
-    admin.from('online_weeks').select('*').order('week'),
+    admin.from('weeks').select('*').order('week'),
     admin.from('submissions').select('student_id, week'),
     admin.from('online_sessions').select('*'),
     admin.from('online_profiles').select('*'),

@@ -27,7 +27,7 @@ export default async function Classes() {
       <h1 className="page-title">Classes</h1>
       <p className="sub">
         {format === 'online'
-          ? `${cohort ? weekSpan(cohort).count : 4} weeks. Each week has a live video session, practice on your own, and homework.`
+          ? `${cohort ? weekSpan(cohort).count : 8} weeks. Each week you join the studio class live on video, practice on your own, and do homework.`
           : `${cohort ? weekSpan(cohort).count : 8} weeks. Each week has class, lab time in Studio B, and homework.`}
       </p>
       {W.map((w) => {

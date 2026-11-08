@@ -88,7 +88,7 @@ export async function submitApplication(f: FormData) {
     sendEmail(
       email,
       'We got your Dream Big Academy application',
-      `Hi ${name.split(' ')[0]},\n\nThanks for applying to ${modName} at the Dream Big Studios Audio Engineering Academy (${online ? 'online, 4 weeks of live video sessions' : 'in person, 8 weeks'}). Each module is its own short course, and signing up for one doesn’t commit you to another. We read every application and will email you soon about next steps.${under18 ? '\n\nBecause you’re under 18, we’ll also email your parent or guardian a consent form to sign.' : ''}`,
+      `Hi ${name.split(' ')[0]},\n\nThanks for applying to ${modName} at the Dream Big Studios Audio Engineering Academy (${online ? 'online, 8 weeks of live-streamed classes' : 'in person, 8 weeks'}). Each module is its own short course, and signing up for one doesn’t commit you to another. We read every application and will email you soon about next steps.${under18 ? '\n\nBecause you’re under 18, we’ll also email your parent or guardian a consent form to sign.' : ''}`,
     ),
     sendEmail(
       notifyAddress(),

@@ -13,7 +13,7 @@ export default async function Admin() {
     supabase.from('cohorts').select('*').order('start_date', { ascending: false }),
     supabase.from('profiles').select('*').eq('role', 'student').order('full_name'),
     supabase.from('weeks').select('*').order('week'),
-    supabase.from('online_weeks').select('*').order('week'),
+    supabase.from('weeks').select('*').order('week'),
     supabase.from('submissions').select('*'),
     supabase.from('messages').select('thread_student_id, sender_id').is('read_at', null),
     supabase.from('online_profiles').select('*'),

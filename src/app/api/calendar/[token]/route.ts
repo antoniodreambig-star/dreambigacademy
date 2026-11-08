@@ -43,7 +43,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const c = cohort as Cohort;
   const online = c.format === 'online';
   const [{ data: weeks }, { data: subs }, { data: ovs }, { data: slots }] = await Promise.all([
-    admin.from(online ? 'online_weeks' : 'weeks').select('*').order('week'),
+    admin.from('weeks').select('*').order('week'),
     admin.from('submissions').select('week').eq('student_id', p.id),
     online ? admin.from('online_sessions').select('*').eq('cohort_id', c.id) : Promise.resolve({ data: [] }),
     online ? admin.from('office_hours').select('*').eq('booked_by', p.id) : Promise.resolve({ data: [] }),
