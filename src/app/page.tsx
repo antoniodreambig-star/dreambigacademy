@@ -7,10 +7,11 @@ import SiteFooter from '@/components/SiteFooter';
 import JsonLd from '@/components/JsonLd';
 import FaqList from '@/components/FaqList';
 import { money, termsFor } from '@/lib/pricing';
+import { MODULES, MODULE_KEYS } from '@/lib/modules';
 import { BIZ, breadcrumbLd, courseLd, faqInPerson, faqLd, graph, organizationLd } from '@/lib/seo';
 
 const TITLE = 'Audio School in Killeen, TX | Audio Engineering Course | Dream Big Academy';
-const DESC = 'Audio engineering school in Killeen, TX. Learn recording, mixing and mastering in Pro Tools at Dream Big Studios. In person or online. Ages 16+. Apply today.';
+const DESC = 'Audio engineering school in Killeen, TX. Three standalone modules in recording, mixing and mastering with Pro Tools at Dream Big Studios. In person or online. Ages 16+. Apply today.';
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -42,7 +43,7 @@ export default async function Landing() {
 
   return (
     <>
-      <JsonLd data={graph(organizationLd(), courseLd('in_person'), faqLd(faqs), breadcrumbLd([{ name: 'Dream Big Academy', path: '/' }]))} />
+      <JsonLd data={graph(organizationLd(), ...courseLd('in_person'), faqLd(faqs), breadcrumbLd([{ name: 'Dream Big Academy', path: '/' }]))} />
       <PublicHeader />
       <main className="main--flush">
         <section className="pubhero">
@@ -50,7 +51,7 @@ export default async function Landing() {
             <p className="eyebrow" style={{ color: '#ff8fab' }}>Dream Big Studios · Killeen, TX</p>
             <h1>Audio engineering school in Killeen, TX.</h1>
             <p>
-              Learn to record, mix and master music in Pro Tools inside a working Killeen recording studio. The Dream Big Academy runs {inP.length} in person, or {onl.length} online from anywhere. Students must be 16 or older.
+              Learn to record, mix and master music in Pro Tools inside a working Killeen recording studio. The Dream Big Academy is three standalone modules. Each runs {inP.length} in person, or {onl.length} online from anywhere, and you can take any one on its own. Students must be 16 or older.
             </p>
             <div className="pubhero__cta">
               <Link className="btn" href="/apply?track=in_person">Apply in person</Link>
@@ -64,18 +65,18 @@ export default async function Landing() {
           <div className="wrap">
             <div className="grid grid--3">
               <div className="card">
-                <p className="eyebrow">In person · 6 months</p>
-                <p className="stat">{money(inP.total)}</p>
+                <p className="eyebrow">In person · {inP.length} per module</p>
+                <p className="stat">{money(inP.total)} <span className="small muted">per module</span></p>
                 <p className="muted" style={{ marginTop: 10 }}>
                   One three-hour class a week at the studio. Pay in full, or {money(inP.monthlyCents)} a month for {inP.monthlyCount} months.
                 </p>
               </div>
               <div className="card">
-                <p className="eyebrow">Online only · 3 months</p>
-                <p className="stat">{money(onl.total)}</p>
+                <p className="eyebrow">Online only · {onl.length} per module</p>
+                <p className="stat">{money(onl.total)} <span className="small muted">per module</span></p>
                 <p className="muted" style={{ marginTop: 10 }}>
-                  A live video session each week, recordings of every session, office hours and homework feedback.
-                  {onl.allowMonthly ? ` Pay in full, or ${onl.monthlyCount} monthly payments.` : ''} <Link href="/online">See the online course</Link>.
+                  {onl.classes} live video sessions, recordings of every session, office hours and homework feedback.
+                  {onl.allowMonthly ? ` Pay in full, or ${onl.monthlyCount} monthly payments.` : ''} <Link href="/online">See the online modules</Link>.
                 </p>
               </div>
               <div className="card">
@@ -89,21 +90,19 @@ export default async function Landing() {
 
         <section className="pubsection">
           <div className="wrap">
-            <h2>What you will learn</h2>
-            <p>The course teaches the full path of a song, from the first microphone to the finished master, using Pro Tools, the software used in professional studios.</p>
+            <h2>Three modules. Take one, or all three over time.</h2>
+            <p>Together the modules teach the full path of a song, from the first microphone to the finished master, using Pro Tools, the software used in professional studios. Each module is its own short course: you sign up and pay for one at a time, and you never have to take the others.</p>
             <div className="grid grid--3" style={{ marginTop: 16 }}>
-              <div className="card">
-                <h3>Recording</h3>
-                <p className="muted">Set up a session, place microphones, set levels and capture clean vocals and instruments.</p>
-              </div>
-              <div className="card">
-                <h3>Mixing</h3>
-                <p className="muted">Balance tracks, shape tone with EQ and compression, and build a mix that sounds good on any speaker.</p>
-              </div>
-              <div className="card">
-                <h3>Mastering</h3>
-                <p className="muted">Prepare finished songs for streaming and release so they are loud, clear and consistent.</p>
-              </div>
+              {MODULE_KEYS.map((k) => (
+                <div className="card" key={k}>
+                  <p className="eyebrow">Module {MODULES[k].letter} · {inP.length}</p>
+                  <h3>{MODULES[k].name}</h3>
+                  <p className="muted">{MODULES[k].blurb}</p>
+                  <ul className="checklist">{MODULES[k].topics.map((tp) => <li key={tp}>{tp}</li>)}</ul>
+                  <p className="small muted">{money(inP.total)} in person · {money(onl.total)} online</p>
+                  <Link className="btn btn--sm" href={`/apply?track=in_person&module=${k}`}>Apply for Module {MODULES[k].letter}</Link>
+                </div>
+              ))}
             </div>
             <p style={{ marginTop: 16 }}>Every week has a class, homework and projects. The instructor reviews your work and gives you feedback, and you can message him inside the student portal.</p>
           </div>
@@ -116,7 +115,7 @@ export default async function Landing() {
               <p>Dream Big Studios records, mixes and masters music for artists in Killeen and across Central Texas, and records podcasts and voice work for creators and businesses. Academy students learn in that same room, on the same equipment, from the engineer who runs it.</p>
               <ul className="checklist">
                 <li>In-person classes in Killeen, TX, with hands-on time in the control room</li>
-                <li>One three-hour class a week for {inP.length}</li>
+                <li>One three-hour class a week for {inP.length} in each module</li>
                 <li>Ages 16 and up. Under 18 needs a parent or guardian consent form</li>
                 <li>Online option with live weekly video sessions and recordings</li>
               </ul>
@@ -136,7 +135,7 @@ export default async function Landing() {
           <div className="wrap">
             <h2>Audio school near Killeen, Harker Heights, Copperas Cove and Temple</h2>
             <p>
-              The studio is on W Stan Schlueter Loop in Killeen, a short drive from Harker Heights, Nolanville, Copperas Cove, Belton, Temple and Fort Hood. Prefer to learn from home? The <Link href="/online">online audio engineering course</Link> covers the same skills over {onl.length}.
+              The studio is on W Stan Schlueter Loop in Killeen, a short drive from Harker Heights, Nolanville, Copperas Cove, Belton, Temple and Fort Hood. Prefer to learn from home? The <Link href="/online">online audio engineering modules</Link> cover the same skills, {onl.length} each.
             </p>
             <p>
               <strong>{BIZ.name}</strong>

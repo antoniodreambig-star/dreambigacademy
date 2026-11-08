@@ -1,3 +1,5 @@
+> **Update (Nov 2026):** the Academy is now sold as three standalone modules (A, B, C), 8 weeks in person or 4 weeks online, $495 / $325 each. Target keywords stay the same; the pages now describe modules, not a 6-month course. Keep it that way: never advertise a "6-month program" or a bundle price.
+
 # Dream Big Academy: SEO strategy
 
 Goal: show on page one of Google for "audio school Killeen TX", "media school Killeen", and related searches.

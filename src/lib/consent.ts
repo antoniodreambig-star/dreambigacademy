@@ -6,11 +6,11 @@
  * NOTE: this is a plain-language template, not legal advice. Have a Texas attorney review it (especially the
  * risk, medical and media sections) before you rely on it.
  */
-export const CONSENT_VERSION = '2026-11';
+export const CONSENT_VERSION = '2026-11b';
 
 export const PROGRAM_SUMMARY =
-  'The Dream Big Studios Audio Engineering Academy is an in-person course at Dream Big Studios (1507 W Stan Schlueter Loop, Suite 101, Killeen, TX). ' +
-  'Students meet for one three-hour class each week for about six months to learn recording, mixing and mastering in Pro Tools, ' +
+  'The Dream Big Studios Audio Engineering Academy offers standalone in-person modules at Dream Big Studios (1507 W Stan Schlueter Loop, Suite 101, Killeen, TX). ' +
+  'In the module the student signs up for, they meet for one three-hour class each week for about eight weeks to learn recording, mixing and mastering in Pro Tools, ' +
   'with homework and hands-on lab time in the studio.';
 
 export const CONSENT_TERMS: { title: string; text: string }[] = [
@@ -43,10 +43,10 @@ export const CONSENT_TERMS: { title: string; text: string }[] = [
 export const MEDIA_RELEASE =
   'Optional: I allow Dream Big Studios to use photos, video or audio of my child made during Academy activities on its website and social media. (You can leave this unchecked and your child can still take part.)';
 
-/** The same consent, worded for the ONLINE-only course (students join live video sessions from home). */
+/** The same consent, worded for the ONLINE-only modules (students join live video sessions from home). */
 export const PROGRAM_SUMMARY_ONLINE =
-  'The Dream Big Studios Audio Engineering Academy online course is a three-month course taught over live video from Dream Big Studios (Killeen, TX). ' +
-  'Students join one live session each week to learn recording, mixing and mastering in Pro Tools, watch recordings of the sessions, do homework on their own equipment, and can book one-on-one office hours with their instructor.';
+  'The Dream Big Studios Audio Engineering Academy offers standalone online modules taught over live video from Dream Big Studios (Killeen, TX). ' +
+  'In the module the student signs up for, they join about four live sessions to learn recording, mixing and mastering in Pro Tools, watch recordings of the sessions, do homework on their own equipment, and can book one-on-one office hours with their instructor.';
 
 export const CONSENT_TERMS_ONLINE: { title: string; text: string }[] = [
   {

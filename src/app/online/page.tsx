@@ -5,23 +5,24 @@ import SiteFooter from '@/components/SiteFooter';
 import JsonLd from '@/components/JsonLd';
 import FaqList from '@/components/FaqList';
 import { money, termsFor } from '@/lib/pricing';
+import { MODULES, MODULE_KEYS } from '@/lib/modules';
 import { breadcrumbLd, courseLd, faqLd, faqOnline, graph, organizationLd } from '@/lib/seo';
 
-const DESC = 'Online audio engineering course. Learn recording, mixing and mastering in Pro Tools in live weekly classes from a working Killeen, TX studio engineer. Ages 16+.';
+const DESC = 'Online audio engineering modules. Learn recording, mixing and mastering in Pro Tools in live classes from a working Killeen, TX studio engineer. Three standalone modules. Ages 16+.';
 
 export const metadata: Metadata = {
-  title: { absolute: 'Online Audio Engineering Course | Learn Pro Tools | Dream Big Academy' },
+  title: { absolute: 'Online Audio Engineering Modules | Learn Pro Tools | Dream Big Academy' },
   description: DESC,
   alternates: { canonical: '/online' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
     siteName: 'Dream Big Academy',
-    title: 'Online Audio Engineering Course | Dream Big Academy',
+    title: 'Online Audio Engineering Modules | Dream Big Academy',
     description: DESC,
-    images: [{ url: '/share-app.png', width: 1200, height: 630, alt: 'Dream Big Academy online audio engineering course' }],
+    images: [{ url: '/share-app.png', width: 1200, height: 630, alt: 'Dream Big Academy online audio engineering modules' }],
   },
-  twitter: { card: 'summary_large_image', title: 'Online Audio Engineering Course | Dream Big Academy', description: DESC, images: ['/share-app.png'] },
+  twitter: { card: 'summary_large_image', title: 'Online Audio Engineering Modules | Dream Big Academy', description: DESC, images: ['/share-app.png'] },
 };
 
 export default function OnlineCourse() {
@@ -32,11 +33,11 @@ export default function OnlineCourse() {
       <JsonLd
         data={graph(
           organizationLd(),
-          courseLd('online'),
+          ...courseLd('online'),
           faqLd(faqs),
           breadcrumbLd([
             { name: 'Dream Big Academy', path: '/' },
-            { name: 'Online audio engineering course', path: '/online' },
+            { name: 'Online audio engineering modules', path: '/online' },
           ]),
         )}
       />
@@ -45,15 +46,15 @@ export default function OnlineCourse() {
         <section className="pubhero">
           <div className="wrap">
             <p className="crumbs">
-              <Link href="/">Dream Big Academy</Link> / Online course
+              <Link href="/">Dream Big Academy</Link> / Online modules
             </p>
-            <h1>Online audio engineering course.</h1>
+            <h1>Online audio engineering modules.</h1>
             <p>
-              Learn recording, mixing and mastering in Pro Tools from a working studio engineer in Killeen, TX. {o.length}, live every week, from anywhere. Students must be 16 or older.
+              Learn recording, mixing and mastering in Pro Tools from a working studio engineer in Killeen, TX. Three standalone modules, each {o.length} with {o.classes} live sessions, from anywhere. Take any one on its own. Students must be 16 or older.
             </p>
             <div className="pubhero__cta">
-              <Link className="btn" href="/apply?track=online">Apply for the online course</Link>
-              <Link className="btn btn--ghost" href="/">In-person course in Killeen</Link>
+              <Link className="btn" href="/apply?track=online">Apply for an online module</Link>
+              <Link className="btn btn--ghost" href="/">In-person modules in Killeen</Link>
             </div>
           </div>
         </section>
@@ -61,10 +62,10 @@ export default function OnlineCourse() {
         <section className="pubfacts">
           <div className="wrap">
             <div className="card">
-              <p className="eyebrow">Online only · {o.length}</p>
-              <p className="stat">{money(o.total)}</p>
+              <p className="eyebrow">Online only · {o.length} per module</p>
+              <p className="stat">{money(o.total)} <span className="small muted">per module</span></p>
               <p className="muted" style={{ marginTop: 10 }}>
-                Pay in full{o.allowMonthly ? `, or ${o.monthlyCount} monthly payments` : ''}.
+                Pay in full{o.allowMonthly ? `, or ${o.monthlyCount} monthly payments` : ''}. You pay for one module at a time.
               </p>
             </div>
           </div>
@@ -72,15 +73,27 @@ export default function OnlineCourse() {
 
         <section className="pubsection">
           <div className="wrap">
-            <h2>How the online course works</h2>
+            <h2>The three online modules</h2>
+            <div className="grid grid--3" style={{ marginBottom: 16 }}>
+              {MODULE_KEYS.map((k) => (
+                <div className="card" key={k}>
+                  <p className="eyebrow">Module {MODULES[k].letter} · {o.length}</p>
+                  <h3>{MODULES[k].name}</h3>
+                  <p className="muted">{MODULES[k].blurb}</p>
+                  <Link className="btn btn--sm" href={`/apply?track=online&module=${k}`}>Apply for Module {MODULES[k].letter}</Link>
+                </div>
+              ))}
+            </div>
+            <p>Each module is its own short course. You sign up and pay for one at a time, and you never have to take the others.</p>
+            <h2>How the online modules work</h2>
             <ul className="checklist">
-              <li>A live video session every week with the instructor</li>
+              <li>{o.classes} live video sessions with the instructor in each module</li>
               <li>Recordings of every session, so you can watch again</li>
               <li>Office hours for questions</li>
               <li>Homework and projects with personal feedback</li>
               <li>Private messages with the instructor in the student portal</li>
             </ul>
-            <p>You learn the same skills as the in-person course: recording, mixing and mastering in Pro Tools, the software used in professional studios.</p>
+            <p>You learn the same skills as the in-person modules: recording, mixing and mastering in Pro Tools, the software used in professional studios.</p>
           </div>
         </section>
 
@@ -95,7 +108,7 @@ export default function OnlineCourse() {
 
         <section className="pubsection">
           <div className="wrap narrow">
-            <h2>Online audio course questions, answered</h2>
+            <h2>Online audio module questions, answered</h2>
             <FaqList items={faqs} />
           </div>
         </section>

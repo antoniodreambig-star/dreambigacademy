@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email';
 import { notifyAddress } from '@/lib/consents';
 import { isFormat, isPlan, planBlurb, termsFor } from '@/lib/pricing';
+import { MODULES, isModule } from '@/lib/modules';
 import { isValidTimeZone, todayLocal } from '@/lib/schedule';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
@@ -27,6 +28,11 @@ export async function submitApplication(f: FormData) {
   const format = isFormat(formatRaw) ? formatRaw : 'in_person';
   const online = format === 'online';
   const go = (qs: string): never => redirect(`/apply?track=${format}&${qs}`);
+
+  const moduleRaw = str(f, 'module', 1);
+  if (!isModule(moduleRaw)) go('err=module');
+  const mod = moduleRaw as 'a' | 'b' | 'c';
+  const modName = `Module ${MODULES[mod].letter}: ${MODULES[mod].name}`;
 
   const name = str(f, 'full_name', 120);
   const email = str(f, 'email', 200).toLowerCase();
@@ -71,6 +77,7 @@ export async function submitApplication(f: FormData) {
     plan,
     cohort_id: cohort,
     format,
+    module: mod,
     time_zone: online ? tzRaw : null,
     location: online ? none(str(f, 'location', 120)) : null,
   });
@@ -81,12 +88,12 @@ export async function submitApplication(f: FormData) {
     sendEmail(
       email,
       'We got your Dream Big Academy application',
-      `Hi ${name.split(' ')[0]},\n\nThanks for applying to the ${online ? 'online ' : ''}Dream Big Studios Audio Engineering Academy${online ? ' (3 months, live video sessions)' : ''}. We read every application and will email you soon about next steps.${under18 ? '\n\nBecause you’re under 18, we’ll also email your parent or guardian a consent form to sign.' : ''}`,
+      `Hi ${name.split(' ')[0]},\n\nThanks for applying to ${modName} at the Dream Big Studios Audio Engineering Academy (${online ? 'online, 4 weeks of live video sessions' : 'in person, 8 weeks'}). Each module is its own short course, and signing up for one doesn’t commit you to another. We read every application and will email you soon about next steps.${under18 ? '\n\nBecause you’re under 18, we’ll also email your parent or guardian a consent form to sign.' : ''}`,
     ),
     sendEmail(
       notifyAddress(),
       `New ${online ? 'ONLINE ' : ''}Academy application: ${name}`,
-      `${name} (${email}${phone ? `, ${phone}` : ''}) just applied for the ${online ? `online-only course (${tzRaw}, wants ${planBlurb(plan, 'online')})` : 'in-person course'}${under18 ? ' — under 18, guardian consent needed' : ''}.\n\nReview it under Applications in the Academy app.`,
+      `${name} (${email}${phone ? `, ${phone}` : ''}) just applied for ${modName}, ${online ? `online (${tzRaw}, wants ${planBlurb(plan, 'online')})` : `in person (wants ${planBlurb(plan, 'in_person')})`}${under18 ? ' — under 18, guardian consent needed' : ''}.\n\nReview it under Applications in the Academy app.`,
     ),
   ]);
 

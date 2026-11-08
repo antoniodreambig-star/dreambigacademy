@@ -26,7 +26,7 @@ export default async function Tuition() {
         <div className="card stack">
           <p style={{ margin: 0 }}>Your payment plan hasn’t been set up yet. Your instructor will set it up soon and it will show up here.</p>
           <p className="small muted" style={{ margin: 0 }}>
-            {terms.format === 'online' ? 'Online-only tuition' : 'Tuition'} is {money(terms.total)}, paid in full{terms.allowMonthly ? `, or ${money(terms.monthlyCents)} a month for ${terms.monthlyCount} months` : ''}.
+            {terms.format === 'online' ? 'Online tuition' : 'Tuition'} for your module is {money(terms.total)}, paid in full{terms.allowMonthly ? `, or ${money(terms.monthlyCents)} a month for ${terms.monthlyCount} months` : ''}.
           </p>
         </div>
       </>

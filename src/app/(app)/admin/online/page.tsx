@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireInstructor } from '@/lib/auth';
 import { buildSessions, meetingFor, setupProgress } from '@/lib/online';
-import { courseWeeks, currentWeek, fmtDate, fmtZoned, sessionTimes, todayLocal, TZ } from '@/lib/schedule';
+import { currentWeek, fmtDate, fmtZoned, localWeek, sessionTimes, todayLocal, TZ, weekSpan } from '@/lib/schedule';
 import type { Attendance, Cohort, OnlineProfile, OnlineSession, Profile, Week } from '@/lib/types';
 import { saveSession } from './actions';
 
@@ -71,7 +71,7 @@ export default async function OnlineAdmin({ searchParams }: { searchParams: Prom
       <div className="grid grid--3" style={{ marginBottom: 16 }}>
         <section className="card">
           <p className="eyebrow">{cohort.name}</p>
-          <h2 style={{ margin: 0 }}>{cw === 0 ? `Starts ${fmtDate(cohort.start_date, { year: 'numeric' })}` : cw > courseWeeks('online') ? 'Finished' : `Week ${cw} of ${courseWeeks('online')}`}</h2>
+          <h2 style={{ margin: 0 }}>{cw === 0 ? `Starts ${fmtDate(cohort.start_date, { year: 'numeric' })}` : cw > weekSpan(cohort).last ? 'Finished' : `Week ${localWeek(cohort, cw)} of ${weekSpan(cohort).count}`}</h2>
           <p className="small muted" style={{ margin: '6px 0 0' }}>{S.length} of {cohort.seats} seats filled</p>
         </section>
         <section className="card">
@@ -94,7 +94,7 @@ export default async function OnlineAdmin({ searchParams }: { searchParams: Prom
         return (
           <details key={r.week} id={`w${r.week}`} className="week">
             <summary style={{ cursor: 'pointer' }}>
-              <span className="week__n">Week {r.week}</span> <span className="week__title">{r.title}</span>{' '}
+              <span className="week__n">Week {localWeek(cohort, r.week)}</span> <span className="week__title">{r.title}</span>{' '}
               {stateChip}{' '}
               {o?.recording_url && <span className="chip chip--done">Recording posted</span>}{' '}
               {r.times.rescheduled && !r.times.canceled && <span className="chip chip--soon">Rescheduled</span>}{' '}
@@ -128,7 +128,7 @@ export default async function OnlineAdmin({ searchParams }: { searchParams: Prom
               <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 700 }}>
                 <input type="checkbox" name="notify" value="1" style={{ width: 20, height: 20 }} /> Email the class about what changed (new recording, new time or cancellation)
               </label>
-              <button className="btn btn--sm" type="submit">Save week {r.week}</button>
+              <button className="btn btn--sm" type="submit">Save week {localWeek(cohort, r.week)}</button>
             </form>
 
             {behind.length > 0 && (

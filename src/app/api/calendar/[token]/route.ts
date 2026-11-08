@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { meetingFor } from '@/lib/online';
-import { addDays, classDate, dueDate, hasHomework, sessionTimes } from '@/lib/schedule';
+import { addDays, classDate, dueDate, hasHomework, localWeek, sessionTimes, weeksFor } from '@/lib/schedule';
 import type { Cohort, OfficeHour, OnlineSession, Submission, Week } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -59,7 +59,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dream Big Studios//Academy//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     `X-WR-CALNAME:Dream Big Academy (${esc(c.name)})`, 'X-WR-TIMEZONE:America/Chicago', 'REFRESH-INTERVAL;VALUE=DURATION:PT6H', 'X-PUBLISHED-TTL:PT6H', ...TZ_BLOCK];
 
-  for (const w of (weeks ?? []) as Week[]) {
+  for (const w of weeksFor(c, (weeks ?? []) as Week[])) {
     const d = classDate(c, w.week);
     if (online) {
       // Online: live sessions are exact moments in time (UTC), so every phone shows them in its own time zone.
@@ -80,7 +80,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
           `DTSTAMP:${stamp}`,
           `DTSTART:${utc(t.start)}`,
           `DTEND:${utc(t.end)}`,
-          fold(`SUMMARY:Academy live session, Week ${w.week}: ${esc(w.title)}`),
+          fold(`SUMMARY:Academy live session, Week ${localWeek(c, w.week)}: ${esc(w.title)}`),
           fold(`DESCRIPTION:${esc(desc)}`),
           ...(m.url ? [fold(`LOCATION:${esc(m.url)}`), fold(`URL:${m.url}`)] : ['LOCATION:Online (see the Live sessions page)']),
           'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Live session starts in 15 minutes', 'TRIGGER:-PT15M', 'END:VALARM',
@@ -94,7 +94,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
         `DTSTAMP:${stamp}`,
         `DTSTART;TZID=America/Chicago:${compact(d)}T${hh(sh * 60 + sm)}`,
         `DTEND;TZID=America/Chicago:${compact(d)}T${hh(endMin)}`,
-        fold(`SUMMARY:Academy Week ${w.week}: ${esc(w.title)}`),
+        fold(`SUMMARY:Academy Week ${localWeek(c, w.week)}: ${esc(w.title)}`),
         fold(`DESCRIPTION:${esc(`In class: ${w.in_class || 'Outline coming soon'}\nLab: ${w.lab || '-'}`)}`),
         'LOCATION:Dream Big Studios\\, 1507 W Stan Schlueter Loop\\, Suite 101\\, Killeen\\, TX 76549',
         'END:VEVENT',
@@ -108,7 +108,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
         `DTSTAMP:${stamp}`,
         `DTSTART;VALUE=DATE:${compact(due)}`,
         `DTEND;VALUE=DATE:${compact(addDays(due, 1))}`,
-        fold(`SUMMARY:Homework due: Week ${w.week}`),
+        fold(`SUMMARY:Homework due: Week ${localWeek(c, w.week)}`),
         fold(`DESCRIPTION:${esc(w.homework)}`),
         'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Homework due tomorrow', 'TRIGGER:-P1D', 'END:VALARM',
         'END:VEVENT',

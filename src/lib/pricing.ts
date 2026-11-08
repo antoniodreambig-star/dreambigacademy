@@ -3,16 +3,24 @@ import type { Format } from './types';
 
 export type { Format };
 
-/** Tuition: $1,500 paid in full, or $250 a month for 6 months (same total). Change these numbers here. */
-export const TUITION_CENTS = 150_000;
-export const MONTHLY_CENTS = 25_000;
-export const MONTHLY_COUNT = 6;
+/**
+ * The Academy is sold as three standalone modules (see lib/modules.ts). Each one is priced on its own.
+ * TEXAS SHORT-COURSE EXEMPTION: a module must be 24 classroom hours or less AND cost LESS THAN $500.
+ * Keep these amounts under 49,999 cents. Change the numbers here.
+ */
+export const EXEMPT_MAX_FEE_CENTS = 49_999;
+export const EXEMPT_MAX_HOURS = 24;
 
-/** Online-only course: $1,000 for the whole 3-month course. Change these numbers here. */
-export const ONLINE_TUITION_CENTS = 100_000;
-/** Online students can also pay the same total in 3 monthly payments. Set to false to offer pay-in-full only. */
-export const ONLINE_ALLOW_MONTHLY = true;
-export const ONLINE_MONTHLY_COUNT = 3;
+/** In person: one module = 8 weekly three-hour classes (24 hours). Pay in full, or two payments. */
+export const TUITION_CENTS = 49_500;
+export const MONTHLY_COUNT = 2;
+export const MONTHLY_CENTS = Math.round(TUITION_CENTS / MONTHLY_COUNT);
+
+/** Online: one module = 4 live video sessions. Paid in full. */
+export const ONLINE_TUITION_CENTS = 32_500;
+/** Online students can also pay in monthly payments. Off, because an online module is only four weeks. */
+export const ONLINE_ALLOW_MONTHLY = false;
+export const ONLINE_MONTHLY_COUNT = 1;
 
 export const isFormat = (v: unknown): v is Format => v === 'in_person' || v === 'online';
 export const FORMAT_LABEL: Record<Format, string> = { in_person: 'In person', online: 'Online only' };
@@ -32,11 +40,13 @@ export interface Terms {
   /** Is the monthly plan offered for this track? */
   allowMonthly: boolean;
   months: number;
-  /** "6 months" / "3 months" */
+  /** "8 weeks" / "4 weeks": how long ONE module runs. */
   length: string;
+  /** Classes in one module (8 in person, 4 online live sessions). */
+  classes: number;
 }
 
-/** Tuition terms for a track. Anything that isn't 'online' gets the in-person terms. */
+/** Tuition terms for ONE module on a track. Every module costs the same. Anything that isn't 'online' gets the in-person terms. */
 export function termsFor(format: Format | null | undefined): Terms {
   if (format === 'online') {
     return {
@@ -45,16 +55,27 @@ export function termsFor(format: Format | null | undefined): Terms {
       monthlyCount: ONLINE_MONTHLY_COUNT,
       monthlyCents: Math.round(ONLINE_TUITION_CENTS / ONLINE_MONTHLY_COUNT),
       allowMonthly: ONLINE_ALLOW_MONTHLY,
-      months: 3,
-      length: '3 months',
+      months: 1,
+      length: '4 weeks',
+      classes: 4,
     };
   }
-  return { format: 'in_person', total: TUITION_CENTS, monthlyCount: MONTHLY_COUNT, monthlyCents: MONTHLY_CENTS, allowMonthly: true, months: 6, length: '6 months' };
+  return { format: 'in_person', total: TUITION_CENTS, monthlyCount: MONTHLY_COUNT, monthlyCents: MONTHLY_CENTS, allowMonthly: true, months: 2, length: '8 weeks', classes: 8 };
+}
+
+/** Problems that would put a module outside the Texas short-course exemption (empty list = fine). */
+export function exemptionIssues(format: Format, classHours: number): string[] {
+  const t = termsFor(format);
+  const out: string[] = [];
+  if (t.total > EXEMPT_MAX_FEE_CENTS) out.push(`The price (${money(t.total)}) must be under $500.`);
+  const hours = t.classes * classHours;
+  if (hours > EXEMPT_MAX_HOURS) out.push(`${t.classes} classes × ${classHours} hours = ${hours} hours. A module must be ${EXEMPT_MAX_HOURS} hours or less.`);
+  return out;
 }
 
 export const planInstallments = (plan: Plan, format: Format | null | undefined = 'in_person') => (plan === 'full' ? 1 : termsFor(format).monthlyCount);
 
-/** "$1,000 paid in full" / "$333.33 a month for 3 months" (plan text for emails and cards). */
+/** "$495 paid in full" / "$247.50 a month for 2 months" (plan text for emails and cards). */
 export function planBlurb(plan: Plan, format: Format | null | undefined): string {
   const t = termsFor(format);
   return plan === 'full' ? `${money(t.total)} paid in full` : `${money(t.monthlyCents)} a month for ${t.monthlyCount} months`;

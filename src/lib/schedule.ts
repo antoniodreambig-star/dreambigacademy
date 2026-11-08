@@ -1,3 +1,4 @@
+import { MODULE_SPAN } from './modules';
 import type { Cohort, Format, OnlineSession, Submission, Week } from './types';
 
 export const TZ = 'America/Chicago';
@@ -40,11 +41,38 @@ export function fmtTime(t: string): string {
   return d.toLocaleTimeString('en-US', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit' });
 }
 
-export function classDate(cohort: Pick<Cohort, 'start_date'>, week: number): string {
-  return addDays(cohort.start_date, (week - 1) * 7);
+/**
+ * The curriculum weeks a class covers. A module class covers its module's weeks (e.g. Module B in person =
+ * weeks 9-16). Older full-course classes (no module) cover the whole curriculum. Week numbers stay global
+ * so homework and attendance keep their week numbers from one module to the next.
+ */
+export interface WeekSpan {
+  first: number;
+  last: number;
+  count: number;
+}
+export function weekSpan(c: Pick<Cohort, 'format' | 'module'>): WeekSpan {
+  const f: Format = c.format === 'online' ? 'online' : 'in_person';
+  const m = c.module ? MODULE_SPAN[f][c.module] : null;
+  const first = m ? m.first : 1;
+  const last = m ? m.last : f === 'online' ? ONLINE_WEEKS : IN_PERSON_WEEKS;
+  return { first, last, count: last - first + 1 };
 }
 
-export function dueDate(cohort: Pick<Cohort, 'start_date'>, w: Pick<Week, 'week' | 'homework_due_days'>): string {
+/** Only the weeks that belong to this class. */
+export function weeksFor<T extends { week: number }>(c: Pick<Cohort, 'format' | 'module'>, list: T[]): T[] {
+  const s = weekSpan(c);
+  return list.filter((w) => w.week >= s.first && w.week <= s.last);
+}
+
+/** "Week 3" as the student counts it: Module B's first class is its Week 1, not Week 9. */
+export const localWeek = (c: Pick<Cohort, 'format' | 'module'>, week: number): number => week - weekSpan(c).first + 1;
+
+export function classDate(cohort: Pick<Cohort, 'start_date' | 'format' | 'module'>, week: number): string {
+  return addDays(cohort.start_date, (week - weekSpan(cohort).first) * 7);
+}
+
+export function dueDate(cohort: Pick<Cohort, 'start_date' | 'format' | 'module'>, w: Pick<Week, 'week' | 'homework_due_days'>): string {
   return addDays(classDate(cohort, w.week), w.homework_due_days);
 }
 
@@ -65,16 +93,18 @@ export function hasHomework(w: Week): boolean {
   return w.homework.trim().length > 0;
 }
 
-/** How many weekly classes a track has: 26 in person (6 months), 13 online (3 months). */
+/** Whole-curriculum length (26 in-person weeks, 13 online). Classes now run one 8-week (online: 4-week) module at a time; see weekSpan(). */
 export const IN_PERSON_WEEKS = 26;
 export const ONLINE_WEEKS = 13;
 export const courseWeeks = (format: Format | null | undefined): number => (format === 'online' ? ONLINE_WEEKS : IN_PERSON_WEEKS);
 
-/** 0 = not started yet, 1..N = the current week, N+1 = finished (N = 26 in person, 13 online). */
-export function currentWeek(cohort: Pick<Cohort, 'start_date' | 'format'>, today: string): number {
-  const total = courseWeeks(cohort.format);
+
+/** 0 = not started yet, first..last = the current week, last+1 = finished (using the curriculum week numbers for this class). */
+export function currentWeek(cohort: Pick<Cohort, 'start_date' | 'format' | 'module'>, today: string): number {
+  const s = weekSpan(cohort);
   const n = Math.floor(daysBetween(cohort.start_date, today) / 7) + 1;
-  return Math.max(0, Math.min(total + 1, n));
+  if (n < 1) return 0;
+  return Math.min(s.last + 1, s.first + n - 1);
 }
 
 // ------------------------------------------------------------- time zones --
@@ -131,7 +161,7 @@ export interface SessionTimes {
 }
 
 /** When one online session really starts and ends, including a one-off reschedule or cancellation. */
-export function sessionTimes(cohort: Pick<Cohort, 'start_date' | 'class_start' | 'class_hours'>, week: number, ov?: Pick<OnlineSession, 'date_override' | 'time_override' | 'canceled'> | null): SessionTimes {
+export function sessionTimes(cohort: Pick<Cohort, 'start_date' | 'class_start' | 'class_hours' | 'format' | 'module'>, week: number, ov?: Pick<OnlineSession, 'date_override' | 'time_override' | 'canceled'> | null): SessionTimes {
   const date = ov?.date_override || classDate(cohort, week);
   const time = ov?.time_override || cohort.class_start;
   const start = zonedTimeToUtc(date, time.slice(0, 5), TZ);

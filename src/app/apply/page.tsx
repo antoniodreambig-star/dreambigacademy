@@ -1,9 +1,10 @@
 import AuthShell from '@/components/AuthShell';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { fmtDate, todayLocal } from '@/lib/schedule';
+import { addDays, fmtDate, todayLocal } from '@/lib/schedule';
 import Link from 'next/link';
 import { money, termsFor } from '@/lib/pricing';
 import { TIME_ZONES } from '@/lib/online';
+import { ENROLL_CUTOFF_DAYS, MODULES, MODULE_KEYS, isModule, type ModuleKey } from '@/lib/modules';
 import type { Cohort, Format } from '@/lib/types';
 import { submitApplication } from './actions';
 
@@ -11,7 +12,7 @@ export const metadata = {
   title: 'Apply to the Audio Engineering Academy in Killeen, TX',
   alternates: { canonical: '/apply' },
   robots: { index: true, follow: true },
-  description: 'Apply to the Dream Big Studios Audio Engineering Academy: recording, mixing and mastering in Pro Tools. Six months in person in Killeen, TX, or three months online. Ages 16+.',
+  description: 'Apply to a Dream Big Studios Audio Engineering Academy module: recording, mixing and mastering in Pro Tools. Three standalone modules, in person in Killeen, TX, or online. Ages 16+.',
   // The card people see when the apply link is shared. Image: public/share-apply.png.
   openGraph: {
     type: 'website',
@@ -31,12 +32,14 @@ const ERR: Record<string, string> = {
   age: 'The Academy is for students 16 and older. Check back when you turn 16.',
   guardian: 'Applicants under 18 need a parent or guardian’s name and email.',
   plan: 'Choose how you’d like to pay.',
+  module: 'Choose which module you’d like to take.',
   tz: 'Choose your time zone so we can show your live sessions at the right time.',
   save: 'That didn’t save. Please try again, or text the studio.',
 };
 
-export default async function Apply({ searchParams }: { searchParams: Promise<{ err?: string; done?: string; track?: string }> }) {
+export default async function Apply({ searchParams }: { searchParams: Promise<{ err?: string; done?: string; track?: string; module?: string }> }) {
   const q = await searchParams;
+  const pickedModule: ModuleKey | null = isModule(q.module) ? q.module : null;
   const format: Format | null = q.track === 'online' ? 'online' : q.track === 'in_person' ? 'in_person' : null;
 
   if (q.done) {
@@ -64,21 +67,21 @@ export default async function Apply({ searchParams }: { searchParams: Promise<{ 
           <div>
             <p className="eyebrow">Dream Big Studios Academy</p>
             <h1 className="page-title">Apply to the Academy</h1>
-            <p className="muted">Learn to record, mix and master in Pro Tools. Pick the way you want to learn. Students must be 16 or older.</p>
+            <p className="muted">Learn to record, mix and master in Pro Tools. The Academy is three standalone modules. Take any one on its own, and sign up for another later if you want to keep going. Pick how you want to learn. Students must be 16 or older.</p>
           </div>
           {q.err && <div className="notice notice--err" role="alert">{ERR[q.err] ?? ERR.save}</div>}
           <div className="grid grid--2">
             <section className="card stack">
               <p className="eyebrow" style={{ margin: 0 }}>In person</p>
-              <p className="stat" style={{ margin: 0 }}>{money(inP.total)}</p>
-              <p style={{ margin: 0 }}>{inP.length}. One three-hour class a week at the studio in Killeen, TX, with hands-on lab time.</p>
-              <p className="small muted" style={{ margin: 0 }}>Or {money(inP.monthlyCents)} a month for {inP.monthlyCount} months.</p>
+              <p className="stat" style={{ margin: 0 }}>{money(inP.total)} <span className="small muted">per module</span></p>
+              <p style={{ margin: 0 }}>Each module is {inP.length}: one three-hour class a week at the studio in Killeen, TX, with hands-on lab time.</p>
+              <p className="small muted" style={{ margin: 0 }}>Pay in full, or {money(inP.monthlyCents)} a month for {inP.monthlyCount} months.</p>
               <Link className="btn" href="/apply?track=in_person">Apply in person</Link>
             </section>
             <section className="card stack">
               <p className="eyebrow" style={{ margin: 0 }}>Online only</p>
-              <p className="stat" style={{ margin: 0 }}>{money(onl.total)}</p>
-              <p style={{ margin: 0 }}>{onl.length}. A live video session each week from anywhere, recordings of every session, office hours, and homework feedback.</p>
+              <p className="stat" style={{ margin: 0 }}>{money(onl.total)} <span className="small muted">per module</span></p>
+              <p style={{ margin: 0 }}>Each module is {onl.length}: {onl.classes} live video sessions from anywhere, recordings of every session, office hours, and homework feedback.</p>
               <p className="small muted" style={{ margin: 0 }}>{onl.allowMonthly ? `Or ${onl.monthlyCount} monthly payments totaling ${money(onl.total)}.` : 'Paid in full.'}</p>
               <Link className="btn" href="/apply?track=online">Apply online</Link>
             </section>
@@ -94,7 +97,7 @@ export default async function Apply({ searchParams }: { searchParams: Promise<{ 
   let cohorts: Cohort[] = [];
   const admin = createAdminClient();
   if (admin) {
-    const { data } = await admin.from('cohorts').select('*').eq('active', true).eq('format', format).gte('start_date', todayLocal()).order('start_date');
+    const { data } = await admin.from('cohorts').select('*').eq('active', true).eq('format', format).gte('start_date', addDays(todayLocal(), ENROLL_CUTOFF_DAYS)).order('start_date');
     cohorts = (data ?? []) as Cohort[];
   }
 
@@ -106,10 +109,10 @@ export default async function Apply({ searchParams }: { searchParams: Promise<{ 
           <h1 className="page-title">Apply to the Academy</h1>
           <p className="muted">
             {online
-              ? `A three-month online course in recording, mixing and mastering with Pro Tools. A live video session each week, with recordings, office hours and feedback on your homework. You’ll need a computer, Pro Tools, a microphone and headphones. Students must be 16 or older.`
-              : `A six-month, in-person course in recording, mixing and mastering with Pro Tools. One three-hour class a week at the studio in Killeen, TX. Students must be 16 or older.`}
+              ? `A four-week online module in recording, mixing and mastering with Pro Tools: four live video sessions, with recordings, office hours and feedback on your homework. You’ll need a computer, Pro Tools, a microphone and headphones. Each module stands on its own. Students must be 16 or older.`
+              : `An eight-week, in-person module in recording, mixing and mastering with Pro Tools: one three-hour class a week at the studio in Killeen, TX. Each module stands on its own. Students must be 16 or older.`}
           </p>
-          <p className="small" style={{ margin: 0 }}><Link href="/apply">{online ? 'Looking for the in-person course?' : 'Looking for the online course?'}</Link></p>
+          <p className="small" style={{ margin: 0 }}><Link href="/apply">{online ? 'Looking for the in-person modules?' : 'Looking for the online modules?'}</Link></p>
         </div>
         {q.err && <div className="notice notice--err" role="alert">{ERR[q.err] ?? ERR.save}</div>}
         <form action={submitApplication} className="stack">
@@ -146,6 +149,20 @@ export default async function Apply({ searchParams }: { searchParams: Promise<{ 
           )}
 
           <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
+            <legend style={{ fontWeight: 700, marginBottom: 6 }}>Which module would you like to take?</legend>
+            {MODULE_KEYS.map((k) => (
+              <label key={k} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontWeight: 600 }}>
+                <input type="radio" name="module" value={k} required defaultChecked={pickedModule === k} style={{ width: 20, height: 20, marginTop: 2 }} />
+                <span>
+                  Module {MODULES[k].letter}: {MODULES[k].name}
+                  <span className="small muted" style={{ display: 'block', fontWeight: 400 }}>{MODULES[k].blurb}</span>
+                </span>
+              </label>
+            ))}
+            <p className="small muted" style={{ margin: 0 }}>Each module is its own short course, enrolled and paid for on its own. You don’t need to take the others.</p>
+          </fieldset>
+
+          <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
             <legend style={{ fontWeight: 700, marginBottom: 6 }}>If you’re under 18: parent or guardian</legend>
             <div><label htmlFor="guardian_name">Parent / guardian name</label><input id="guardian_name" name="guardian_name" type="text" /></div>
             <div className="row">
@@ -160,15 +177,16 @@ export default async function Apply({ searchParams }: { searchParams: Promise<{ 
           {cohorts.length > 0 && (
             <div>
               <label htmlFor="cohort_id">Which start date works for you? (optional)</label>
+              <p className="small muted" style={{ margin: '0 0 4px' }}>Applications close {ENROLL_CUTOFF_DAYS} days before a module starts.</p>
               <select id="cohort_id" name="cohort_id" defaultValue="">
                 <option value="">Whichever is next</option>
-                {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name} · starts {fmtDate(c.start_date, { year: 'numeric' })}</option>)}
+                {cohorts.map((c) => <option key={c.id} value={c.id}>{c.module ? `Module ${MODULES[c.module].letter} · ` : ''}{c.name} · starts {fmtDate(c.start_date, { year: 'numeric' })}</option>)}
               </select>
             </div>
           )}
 
           <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend style={{ fontWeight: 700, marginBottom: 6 }}>How would you like to pay?</legend>
+            <legend style={{ fontWeight: 700, marginBottom: 6 }}>How would you like to pay for this module?</legend>
             <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontWeight: 600 }}>
               <input type="radio" name="plan" value="full" required style={{ width: 20, height: 20 }} />
               Pay in full: {money(terms.total)}

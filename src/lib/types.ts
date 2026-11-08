@@ -26,6 +26,7 @@ export interface Profile {
 }
 
 export type Format = 'in_person' | 'online';
+export type ModuleKey = 'a' | 'b' | 'c';
 
 export interface Cohort {
   id: string;
@@ -37,6 +38,8 @@ export interface Cohort {
   active: boolean;
   /** 'online' = the online-only track: 13 weeks of live video sessions. */
   format: Format;
+  /** Which standalone module this class teaches (A, B or C). null = an older full-course class. */
+  module: ModuleKey | null;
   seats: number;
   /** Online classes: the Zoom / Meet link for the live sessions. */
   meeting_url: string | null;
@@ -163,6 +166,8 @@ export interface Application {
   decided_at: string | null;
   decision_note: string | null;
   format: Format;
+  /** The module the applicant wants (A, B or C). */
+  module: ModuleKey | null;
   time_zone: string | null;
   location: string | null;
 }

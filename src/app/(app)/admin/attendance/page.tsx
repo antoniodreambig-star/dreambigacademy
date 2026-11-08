@@ -1,5 +1,5 @@
 import { requireInstructor } from '@/lib/auth';
-import { classDate, courseWeeks, currentWeek, fmtDate, todayLocal } from '@/lib/schedule';
+import { classDate, currentWeek, fmtDate, localWeek, todayLocal, weekSpan } from '@/lib/schedule';
 import type { Attendance, AttendanceStatus, Cohort, Profile } from '@/lib/types';
 import { saveAttendance } from '../actions';
 
@@ -23,10 +23,10 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     return (<><h1 className="page-title">Attendance</h1><div className="card"><p>Create a class first (Classes page), then come back to take attendance.</p></div></>);
   }
   const cohort = C.find((c) => c.id === q.cohort) ?? C.find((c) => c.active) ?? C[0];
-  const total = courseWeeks(cohort.format);
+  const span = weekSpan(cohort);
   const options = cohort.format === 'online' ? ONLINE_STATUSES : STATUSES;
-  const guess = Math.min(total, Math.max(1, currentWeek(cohort, todayLocal())));
-  const wk = Math.min(total, Math.max(1, Number(q.week) || guess));
+  const guess = Math.min(span.last, Math.max(span.first, currentWeek(cohort, todayLocal())));
+  const wk = Math.min(span.last, Math.max(span.first, Number(q.week) || guess));
 
   const { data: students } = await supabase.from('profiles').select('*').eq('role', 'student').eq('cohort_id', cohort.id).order('full_name');
   const S = (students ?? []) as Profile[];
@@ -48,7 +48,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
         </div>
         <div>
           <label htmlFor="week">Week</label>
-          <select id="week" name="week" defaultValue={wk}>{Array.from({ length: total }, (_, i) => i + 1).map((n) => <option key={n} value={n}>Week {n}</option>)}</select>
+          <select id="week" name="week" defaultValue={wk}>{Array.from({ length: span.count }, (_, i) => span.first + i).map((n) => <option key={n} value={n}>Week {localWeek(cohort, n)}</option>)}</select>
         </div>
         <button className="btn btn--sm" type="submit">Show</button>
       </form>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireInstructor } from '@/lib/auth';
 import { consentLink } from '@/lib/consents';
 import { PLAN_LABEL, money, planBlurb, termsFor } from '@/lib/pricing';
+import { MODULES, MODULE_KEYS, moduleLabel } from '@/lib/modules';
 import { TIME_ZONES } from '@/lib/online';
 import { fmtDate } from '@/lib/schedule';
 import type { Application, Cohort, GuardianConsent } from '@/lib/types';
@@ -18,6 +19,8 @@ const ERR: Record<string, string> = {
   dob: 'Enter the date of birth as a full date, or leave it blank.',
   age: 'The Academy is for students 16 and older.',
   dupe: 'Someone with that email is already on this list. Look for them under All.',
+  late: 'Not accepted: that module starts in less than 14 days. The Texas short-course exemption requires students to receive the course description and refund policy 14 days before the start, so pick a later class.',
+  invite: 'That didn’t save. Please try again.',
   add: 'That didn’t save. If you haven’t yet run the database update for adding students (10_add_students.sql), run it first, then try again.',
 };
 const age = (birth: string) => {
@@ -70,8 +73,14 @@ export default async function Applications({ searchParams }: { searchParams: Pro
               <div>
                 <label htmlFor="as-format">Course</label>
                 <select id="as-format" name="format" defaultValue="in_person">
-                  <option value="in_person">In person (6 months)</option>
-                  <option value="online">Online only (3 months)</option>
+                  <option value="in_person">In person ({termsFor('in_person').length} per module)</option>
+                  <option value="online">Online only ({termsFor('online').length} per module)</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="as-module">Module</label>
+                <select id="as-module" name="module" defaultValue="a">
+                  {MODULE_KEYS.map((k) => <option key={k} value={k}>{moduleLabel(k)}</option>)}
                 </select>
               </div>
               <div>
@@ -96,7 +105,7 @@ export default async function Applications({ searchParams }: { searchParams: Pro
                 <label htmlFor="as-cohort">Class</label>
                 <select id="as-cohort" name="cohort_id" defaultValue="">
                   <option value="">None yet</option>
-                  {C.map((c) => <option key={c.id} value={c.id}>{c.name}{c.format === 'online' ? ' (online)' : ''} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
+                  {C.map((c) => <option key={c.id} value={c.id}>{c.module ? `Module ${MODULES[c.module].letter} · ` : ''}{c.name}{c.format === 'online' ? ' (online)' : ''} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
                 </select>
               </div>
             </div>
@@ -151,7 +160,7 @@ export default async function Applications({ searchParams }: { searchParams: Pro
               </p>
             )}
             <p style={{ margin: 0 }}>
-              <strong>Course:</strong> {a.format === 'online' ? `Online only (${termsFor('online').length})` : `In person (${termsFor('in_person').length})`}
+              <strong>Module:</strong> {a.module ? moduleLabel(a.module) : 'Full course (older application)'} · <strong>Format:</strong> {a.format === 'online' ? `Online only (${termsFor('online').length})` : `In person (${termsFor('in_person').length})`}
               {a.format === 'online' && <> · <strong>Time zone:</strong> {a.time_zone ? a.time_zone.replace(/_/g, ' ') : '—'}{a.location ? ` · ${a.location}` : ''}</>}
               <br />
               <strong>Wants to pay:</strong> {a.plan ? `${PLAN_LABEL[a.plan]} (${planBlurb(a.plan, a.format)})` : '—'}
@@ -193,7 +202,7 @@ export default async function Applications({ searchParams }: { searchParams: Pro
                       <label>Class</label>
                       <select name="cohort_id" defaultValue={a.cohort_id ?? C.find((c) => c.format === a.format)?.id ?? ''}>
                         <option value="">None yet</option>
-                        {C.filter((c) => c.format === a.format).map((c) => <option key={c.id} value={c.id}>{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
+                        {C.filter((c) => c.format === a.format && (!a.module || !c.module || c.module === a.module)).map((c) => <option key={c.id} value={c.id}>{c.module ? `Module ${MODULES[c.module].letter} · ` : ''}{c.name} (starts {fmtDate(c.start_date, { year: 'numeric' })})</option>)}
                       </select>
                     </div>
                     <div>

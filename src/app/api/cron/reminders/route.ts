@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { DEFAULT_TZ, meetingFor, setupProgress } from '@/lib/online';
-import { TZ, addDays, classDate, daysBetween, dueDate, fmtDate, fmtTime, fmtZoned, hasHomework, sessionTimes, todayLocal } from '@/lib/schedule';
+import { TZ, addDays, classDate, daysBetween, dueDate, fmtDate, fmtTime, fmtZoned, hasHomework, localWeek, sessionTimes, todayLocal, weeksFor } from '@/lib/schedule';
 import { sendEmail, siteUrl } from '@/lib/email';
 import type { Cohort, OfficeHour, OnlineProfile, OnlineSession, Profile, Submission, Week } from '@/lib/types';
 
@@ -45,27 +45,27 @@ export async function GET(req: Request) {
     const op = profileBy.get(p.id) ?? null;
     const tz = op?.time_zone || DEFAULT_TZ;
 
-    for (const w of online ? OW : W) {
+    for (const w of weeksFor(c, online ? OW : W)) {
       if (hasHomework(w) && !done.has(`${p.id}:${w.week}`)) {
         const due = dueDate(c, w);
-        if (due === today) lines.push(`Homework due TODAY (Week ${w.week}): ${w.homework}`);
-        else if (due === tomorrow) lines.push(`Homework due tomorrow (Week ${w.week}): ${w.homework}`);
+        if (due === today) lines.push(`Homework due TODAY (Week ${localWeek(c, w.week)}): ${w.homework}`);
+        else if (due === tomorrow) lines.push(`Homework due tomorrow (Week ${localWeek(c, w.week)}): ${w.homework}`);
       }
       if (!online) {
-        if (classDate(c, w.week) === tomorrow) lines.push(`Class tomorrow, ${fmtDate(tomorrow)} at ${fmtTime(c.class_start)}: Week ${w.week}, ${w.title}`);
+        if (classDate(c, w.week) === tomorrow) lines.push(`Class tomorrow, ${fmtDate(tomorrow)} at ${fmtTime(c.class_start)}: Week ${localWeek(c, w.week)}, ${w.title}`);
         continue;
       }
       // Online: the live session, in the student's own time zone, with the join link.
       const ov = sessionBy.get(`${c.id}:${w.week}`) ?? null;
       const t = sessionTimes(c, w.week, ov);
       if (t.canceled && (t.date === today || t.date === tomorrow)) {
-        lines.push(`Live session canceled (Week ${w.week}, ${w.title}).${ov?.topic_note ? ` ${ov.topic_note}` : ''}`);
+        lines.push(`Live session canceled (Week ${localWeek(c, w.week)}, ${w.title}).${ov?.topic_note ? ` ${ov.topic_note}` : ''}`);
         continue;
       }
       if (t.date === today || t.date === tomorrow) {
         const link = meetingFor(c, ov);
         lines.push(
-          `Live session ${t.date === today ? 'TODAY' : 'tomorrow'}: Week ${w.week}, ${w.title}\n${fmtZoned(t.start, tz)}${tz !== TZ ? ` (${fmtZoned(t.start, TZ)})` : ''}${link.url ? `\nJoin: ${link.url}${link.passcode ? ` (passcode ${link.passcode})` : ''}` : ''}${ov?.topic_note ? `\nBefore you join: ${ov.topic_note}` : ''}`,
+          `Live session ${t.date === today ? 'TODAY' : 'tomorrow'}: Week ${localWeek(c, w.week)}, ${w.title}\n${fmtZoned(t.start, tz)}${tz !== TZ ? ` (${fmtZoned(t.start, TZ)})` : ''}${link.url ? `\nJoin: ${link.url}${link.passcode ? ` (passcode ${link.passcode})` : ''}` : ''}${ov?.topic_note ? `\nBefore you join: ${ov.topic_note}` : ''}`,
         );
       }
     }

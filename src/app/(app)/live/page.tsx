@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireOnlineStudent } from '@/lib/auth';
 import { DEFAULT_TZ, buildSessions, meetingFor, type SessionRow } from '@/lib/online';
-import { TZ, fmtZoned, fmtZonedTime } from '@/lib/schedule';
+import { TZ, fmtZoned, fmtZonedTime, localWeek } from '@/lib/schedule';
 import type { Attendance, AttendanceStatus, OnlineProfile, OnlineSession, Week } from '@/lib/types';
 import { markWatched } from './actions';
 
@@ -40,7 +40,7 @@ export default async function Live({ searchParams }: { searchParams: Promise<{ o
     return (
       <article id={`w${r.week}`} className="week">
         <div className="week__head">
-          <span className="week__n">Week {r.week}</span>
+          <span className="week__n">Week {localWeek(cohort, r.week)}</span>
           <span className="week__title">{r.title}</span>
           {r.state === 'open' && <span className="chip chip--soon">Live now</span>}
           {r.state === 'canceled' && <span className="chip chip--overdue">Canceled</span>}

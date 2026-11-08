@@ -1,17 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Cohort, Format, OnlineProfile, OnlineSession, Project, Week } from './types';
-import { sessionTimes, type SessionTimes } from './schedule';
+import { sessionTimes, weeksFor, type SessionTimes } from './schedule';
 
 /** Which curriculum tables belong to a track. Online students' homework still lives in `submissions`. */
 export const weeksTable = (format: Format | null | undefined) => (format === 'online' ? 'online_weeks' : 'weeks');
 export const projectsTable = (format: Format | null | undefined) => (format === 'online' ? 'online_projects' : 'projects');
 
-export async function loadCurriculum(supabase: SupabaseClient, format: Format | null | undefined): Promise<{ weeks: Week[]; projects: Project[] }> {
+/** The curriculum for a track. Pass the student's class to get only the weeks of their module. */
+export async function loadCurriculum(supabase: SupabaseClient, format: Format | null | undefined, cohort?: Pick<Cohort, 'format' | 'module'> | null): Promise<{ weeks: Week[]; projects: Project[] }> {
   const [{ data: weeks }, { data: projects }] = await Promise.all([
     supabase.from(weeksTable(format)).select('*').order('week'),
     supabase.from(projectsTable(format)).select('*'),
   ]);
-  return { weeks: (weeks ?? []) as Week[], projects: (projects ?? []) as Project[] };
+  const W = (weeks ?? []) as Week[];
+  const P = (projects ?? []) as Project[];
+  return cohort ? { weeks: weeksFor(cohort, W), projects: weeksFor(cohort, P) } : { weeks: W, projects: P };
 }
 
 /** What a week is called on screen. Online weeks are a live video session plus practice at home. */
@@ -63,7 +66,7 @@ export interface SessionRow {
 
 export function buildSessions(cohort: Cohort, weeks: Pick<Week, 'week' | 'title'>[], overrides: OnlineSession[], now: Date = new Date()): SessionRow[] {
   const by = new Map(overrides.map((o) => [o.week, o]));
-  return weeks.map((w) => {
+  return weeksFor(cohort, weeks).map((w) => {
     const ov = by.get(w.week) ?? null;
     const times = sessionTimes(cohort, w.week, ov);
     return { week: w.week, title: w.title, times, ov, state: joinState(times, now) };

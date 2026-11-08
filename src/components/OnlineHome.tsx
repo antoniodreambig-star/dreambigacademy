@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { buildSessions, latestRecording, meetingFor, nextSession, setupProgress, DEFAULT_TZ } from '@/lib/online';
-import { TZ, courseWeeks, currentWeek, dueDate, fmtDate, fmtZoned, fmtZonedTime, hasHomework, hwState, todayLocal } from '@/lib/schedule';
+import { TZ, currentWeek, dueDate, fmtDate, fmtZoned, fmtZonedTime, hasHomework, hwState, localWeek, todayLocal, weekSpan, weeksFor } from '@/lib/schedule';
 import type { Announcement, Attendance, Cohort, OfficeHour, OnlineProfile, OnlineSession, Profile, Submission, Week } from '@/lib/types';
 
 const DONE = new Set(['present', 'late', 'excused', 'watched']);
@@ -20,7 +20,7 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
     supabase.from('office_hours').select('*').eq('booked_by', profile.id).gt('starts_at', nowIso).order('starts_at').limit(1),
   ]);
 
-  const W = (weeks ?? []) as Week[];
+  const W = weeksFor(cohort, (weeks ?? []) as Week[]);
   const S = new Map(((subs ?? []) as Submission[]).map((s) => [s.week, s]));
   const prof = (op as OnlineProfile | null) ?? null;
   const tz = prof?.time_zone || DEFAULT_TZ;
@@ -30,7 +30,7 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
   const latest = latestRecording(rows);
   const today = todayLocal();
   const cw = currentWeek(cohort, today);
-  const total = courseWeeks('online');
+  const total = weekSpan(cohort).last;
   const setup = setupProgress(prof);
   const booked = ((oh ?? []) as OfficeHour[])[0] ?? null;
 
@@ -51,7 +51,7 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
       <h1 className="page-title">Hi {first}</h1>
       <p className="sub">
         {cohort.name} · Online ·{' '}
-        {cw === 0 ? `Live sessions start ${fmtDate(cohort.start_date, { year: 'numeric' })}` : cw > total ? 'Course complete' : `Week ${cw} of ${total}`}
+        {cw === 0 ? `Live sessions start ${fmtDate(cohort.start_date, { year: 'numeric' })}` : cw > total ? 'Course complete' : `Week ${localWeek(cohort, cw)} of ${weekSpan(cohort).count}`}
       </p>
 
       {!setup.complete && (
@@ -66,7 +66,7 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
           {next ? (
             <>
               <h2 style={{ fontSize: '1.7rem' }}>
-                Week {next.week}: {next.title}
+                Week {localWeek(cohort, next.week)}: {next.title}
               </h2>
               <p className="muted" style={{ marginTop: 8 }}>
                 {fmtZoned(next.times.start, tz)} · {cohort.class_hours} hours
@@ -102,7 +102,7 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
             {homework.map(({ w, state, due }) => (
               <div key={w.week}>
                 <span className={`chip chip--${state === 'overdue' ? 'overdue' : state === 'soon' ? 'soon' : ''}`}>{state === 'overdue' ? 'Overdue' : `Due ${fmtDate(due)}`}</span>{' '}
-                <strong>Week {w.week}</strong> <span className="small muted">{w.homework.slice(0, 90)}{w.homework.length > 90 ? '…' : ''}</span>
+                <strong>Week {localWeek(cohort, w.week)}</strong> <span className="small muted">{w.homework.slice(0, 90)}{w.homework.length > 90 ? '…' : ''}</span>
               </div>
             ))}
           </div>
@@ -117,11 +117,11 @@ export default async function OnlineHome({ supabase, profile, cohort }: { supaba
             <>
               <p style={{ margin: 0 }}><strong>{toWatch.length}</strong> recording{toWatch.length === 1 ? '' : 's'} to catch up on.</p>
               <p className="small muted" style={{ margin: '6px 0 12px' }}>
-                {toWatch.slice(0, 3).map((r) => `Week ${r.week}`).join(', ')}{toWatch.length > 3 ? '…' : ''}
+                {toWatch.slice(0, 3).map((r) => `Week ${localWeek(cohort, r.week)}`).join(', ')}{toWatch.length > 3 ? '…' : ''}
               </p>
             </>
           ) : latest ? (
-            <p style={{ margin: '0 0 12px' }}>Latest: Week {latest.week}, {latest.title}.</p>
+            <p style={{ margin: '0 0 12px' }}>Latest: Week {localWeek(cohort, latest.week)}, {latest.title}.</p>
           ) : (
             <p className="muted" style={{ margin: '0 0 12px' }}>Every live session is recorded. Recordings show up here after class.</p>
           )}

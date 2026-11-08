@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireProfile } from '@/lib/auth';
-import { classDate, courseWeeks, currentWeek, dueDate, fmtDate, fmtTime, hasHomework, hwState, todayLocal } from '@/lib/schedule';
+import { classDate, currentWeek, dueDate, fmtDate, fmtTime, hasHomework, hwState, localWeek, todayLocal, weekSpan, weeksFor } from '@/lib/schedule';
 import OnlineHome from '@/components/OnlineHome';
 import type { Announcement, Cohort, Submission, Week } from '@/lib/types';
 
@@ -33,7 +33,7 @@ export default async function Home() {
     supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(3),
   ]);
   const c = cohort as Cohort;
-  const W = (weeks ?? []) as Week[];
+  const W = weeksFor(c, (weeks ?? []) as Week[]);
   const S = new Map(((subs ?? []) as Submission[]).map((s) => [s.week, s]));
   const today = todayLocal();
   const cw = currentWeek(c, today);
@@ -52,7 +52,7 @@ export default async function Home() {
       <h1 className="page-title">Hi {first}</h1>
       <p className="sub">
         {c.name} ·{' '}
-        {cw === 0 ? `Classes start ${fmtDate(c.start_date, { year: 'numeric' })}` : cw > courseWeeks(c.format) ? 'Course complete' : `Week ${cw} of ${courseWeeks(c.format)}`}
+        {cw === 0 ? `Classes start ${fmtDate(c.start_date, { year: 'numeric' })}` : cw > weekSpan(c).last ? 'Course complete' : `Week ${localWeek(c, cw)} of ${weekSpan(c).count}`}
       </p>
 
       <div className="grid grid--2">
@@ -61,7 +61,7 @@ export default async function Home() {
           {nextClass ? (
             <>
               <h2 style={{ fontSize: '1.7rem' }}>
-                Week {nextClass.week}: {nextClass.title}
+                Week {localWeek(c, nextClass.week)}: {nextClass.title}
               </h2>
               <p className="muted" style={{ marginTop: 8 }}>
                 {fmtDate(classDate(c, nextClass.week), { year: 'numeric' })} at {fmtTime(c.class_start)} · {c.class_hours} hours · Dream Big Studios, Studio A
@@ -93,7 +93,7 @@ export default async function Home() {
                 <span className={`chip chip--${state === 'overdue' ? 'overdue' : state === 'soon' ? 'soon' : ''}`}>
                   {state === 'overdue' ? 'Overdue' : `Due ${fmtDate(due)}`}
                 </span>{' '}
-                <strong>Week {w.week}</strong> <span className="small muted">{w.homework.slice(0, 90)}{w.homework.length > 90 ? '…' : ''}</span>
+                <strong>Week {localWeek(c, w.week)}</strong> <span className="small muted">{w.homework.slice(0, 90)}{w.homework.length > 90 ? '…' : ''}</span>
               </div>
             ))}
           </div>

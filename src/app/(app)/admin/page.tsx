@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireInstructor } from '@/lib/auth';
 import Avatar from '@/components/Avatar';
 import { setupProgress } from '@/lib/online';
-import { classDate, courseWeeks, currentWeek, dueDate, fmtDate, hasHomework, hwState, todayLocal } from '@/lib/schedule';
+import { classDate, currentWeek, dueDate, fmtDate, hasHomework, hwState, localWeek, todayLocal, weekSpan, weeksFor } from '@/lib/schedule';
 import type { Cohort, Message, OnlineProfile, Profile, Submission, Week } from '@/lib/types';
 
 export const metadata = { title: 'Students' };
@@ -33,7 +33,7 @@ export default async function Admin() {
 
   function Table({ cohort, list }: { cohort: Cohort | null; list: Profile[] }) {
     const online = cohort?.format === 'online';
-    const W = online ? WOn : WIn;
+    const W = cohort ? weeksFor(cohort, online ? WOn : WIn) : [];
     return (
       <div className="tablewrap">
         <table>
@@ -89,7 +89,7 @@ export default async function Admin() {
         const cw = currentWeek(c, today);
         return (
           <section className="card" key={c.id} style={{ marginBottom: 16 }}>
-            <p className="eyebrow">{cw === 0 ? `Starts ${fmtDate(c.start_date, { year: 'numeric' })}` : cw > courseWeeks(c.format) ? 'Finished' : `Week ${cw} of ${courseWeeks(c.format)} · ${c.format === 'online' ? 'live session' : 'class'} ${fmtDate(classDate(c, cw))}`}</p>
+            <p className="eyebrow">{cw === 0 ? `Starts ${fmtDate(c.start_date, { year: 'numeric' })}` : cw > weekSpan(c).last ? 'Finished' : `Week ${localWeek(c, cw)} of ${weekSpan(c).count} · ${c.format === 'online' ? 'live session' : 'class'} ${fmtDate(classDate(c, cw))}`}</p>
             <h2 style={{ marginBottom: 12 }}>{c.name} {c.format === 'online' && <span className="chip chip--soon">Online</span>} <span className="muted small">{list.length} of {c.seats} seats</span></h2>
             <Table cohort={c} list={list} />
           </section>

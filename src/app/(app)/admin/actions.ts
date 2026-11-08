@@ -6,6 +6,8 @@ import { requireInstructor } from '@/lib/auth';
 import { emailConfigured, sendEmail, sendEmailEach, siteUrl } from '@/lib/email';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { cleanUrl } from '@/lib/online';
+import { isModule } from '@/lib/modules';
+import { exemptionIssues } from '@/lib/pricing';
 import { IN_PERSON_WEEKS } from '@/lib/schedule';
 import type { Format } from '@/lib/types';
 
@@ -23,6 +25,7 @@ function cohortFields(f: FormData, start: string) {
     class_start: str(f, 'class_start', 5) || '10:00',
     class_hours: Number(str(f, 'class_hours', 4)) || (online ? 2 : 3),
     format: (online ? 'online' : 'in_person') as Format,
+    module: isModule(str(f, 'module', 1)) ? str(f, 'module', 1) : null,
     seats: seats >= 1 && seats <= 200 ? seats : online ? 12 : 6,
     ...(online
       ? { meeting_url: cleanUrl(str(f, 'meeting_url', 500)), meeting_passcode: none(str(f, 'meeting_passcode', 60)), meeting_notes: none(str(f, 'meeting_notes', 600)) }
@@ -35,7 +38,11 @@ export async function createCohort(f: FormData) {
   const name = str(f, 'name', 80);
   const start = str(f, 'start_date', 10);
   if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(start)) redirect('/admin/cohorts?err=cohort');
-  const { error } = await supabase.from('cohorts').insert(cohortFields(f, start));
+  const fields = cohortFields(f, start);
+  if (!fields.module) redirect('/admin/cohorts?err=module');
+  // A module must stay inside the Texas short-course exemption: 24 classroom hours or less.
+  if (exemptionIssues(fields.format, fields.class_hours).length) redirect('/admin/cohorts?err=hours');
+  const { error } = await supabase.from('cohorts').insert(fields);
   if (error) redirect('/admin/cohorts?err=cohort');
   revalidatePath('/admin/cohorts');
   redirect('/admin/cohorts?ok=cohort');
@@ -46,7 +53,9 @@ export async function updateCohort(f: FormData) {
   const id = str(f, 'id', 40);
   const start = str(f, 'start_date', 10);
   if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(start)) redirect('/admin/cohorts?err=cohort');
-  const { error } = await supabase.from('cohorts').update(cohortFields(f, start)).eq('id', id);
+  const fields = cohortFields(f, start);
+  if (fields.module && exemptionIssues(fields.format, fields.class_hours).length) redirect('/admin/cohorts?err=hours');
+  const { error } = await supabase.from('cohorts').update(fields).eq('id', id);
   if (error) redirect('/admin/cohorts?err=cohort');
   revalidatePath('/', 'layout');
   redirect('/admin/cohorts?ok=updated');

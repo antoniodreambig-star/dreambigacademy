@@ -1,6 +1,6 @@
 import { requireProfile } from '@/lib/auth';
 import { loadCurriculum, wordsFor } from '@/lib/online';
-import { classDate, courseWeeks, currentWeek, fmtDate, todayLocal } from '@/lib/schedule';
+import { classDate, currentWeek, fmtDate, localWeek, todayLocal, weekSpan } from '@/lib/schedule';
 import type { Attendance, Cohort } from '@/lib/types';
 
 const ATT = { present: ['Present', 'chip--done'], late: ['Late', 'chip--soon'], absent: ['Absent', 'chip--overdue'], excused: ['Excused', ''], watched: ['Watched recording', 'chip--done'] } as const;
@@ -15,7 +15,7 @@ export default async function Classes() {
   ]);
   const cohort = cohortRes.data as Cohort | null;
   const format = cohort?.format ?? 'in_person';
-  const { weeks: W, projects: P } = await loadCurriculum(supabase, format);
+  const { weeks: W, projects: P } = await loadCurriculum(supabase, format, cohort);
   const words = wordsFor(format);
   const A = new Map(((attRows ?? []) as Attendance[]).map((a) => [a.week, a.status]));
   const today = todayLocal();
@@ -27,8 +27,8 @@ export default async function Classes() {
       <h1 className="page-title">Classes</h1>
       <p className="sub">
         {format === 'online'
-          ? `${courseWeeks(format)} weeks over 3 months. Each week has a live video session, practice on your own, and homework.`
-          : `${courseWeeks(format)} weeks. Each week has class, lab time in Studio B, and homework.`}
+          ? `${cohort ? weekSpan(cohort).count : 4} weeks. Each week has a live video session, practice on your own, and homework.`
+          : `${cohort ? weekSpan(cohort).count : 8} weeks. Each week has class, lab time in Studio B, and homework.`}
       </p>
       {W.map((w) => {
         const header = w.phase !== lastPhase ? <h2 className="phase" key={`p-${w.phase}`}>{w.phase}</h2> : null;
@@ -39,7 +39,7 @@ export default async function Classes() {
             {header}
             <article className={`week${now === w.week ? ' is-now' : ''}`}>
               <div className="week__head">
-                <span className="week__n">Week {w.week}</span>
+                <span className="week__n">Week {cohort ? localWeek(cohort, w.week) : w.week}</span>
                 <span className="week__title">{w.title}</span>
                 {now === w.week && <span className="chip chip--soon">This week</span>}
                 {A.get(w.week) && <span className={`chip ${ATT[A.get(w.week)!][1]}`}>{ATT[A.get(w.week)!][0]}</span>}
@@ -56,7 +56,7 @@ export default async function Classes() {
               )}
               {projs.map((p) => (
                 <div className="project" key={p.key}>
-                  <h4>{p.title} (due week {p.week})</h4>
+                  <h4>{p.title} (due week {cohort ? localWeek(cohort, p.week) : p.week})</h4>
                   <ul>{p.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
                 </div>
               ))}

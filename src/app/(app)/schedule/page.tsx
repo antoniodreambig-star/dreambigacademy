@@ -1,6 +1,6 @@
 import { requireStudent } from '@/lib/auth';
 import { buildSessions, DEFAULT_TZ, loadCurriculum } from '@/lib/online';
-import { classDate, dueDate, fmtDate, fmtTime, fmtZoned, hasHomework, hwState, todayLocal, type HwState } from '@/lib/schedule';
+import { classDate, dueDate, fmtDate, fmtTime, fmtZoned, hasHomework, hwState, localWeek, todayLocal, type HwState } from '@/lib/schedule';
 import { siteUrl } from '@/lib/email';
 import type { Cohort, OnlineProfile, OnlineSession, Submission, SubmissionComment } from '@/lib/types';
 import HomeworkForm from '@/components/HomeworkForm';
@@ -28,7 +28,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
   const c = cohort as Cohort;
   const online = c.format === 'online';
   const [{ weeks: W, projects: P }, { data: subs }, { data: ovs }, { data: op }] = await Promise.all([
-    loadCurriculum(supabase, c.format),
+    loadCurriculum(supabase, c.format, c),
     supabase.from('submissions').select('*').eq('student_id', profile.id),
     online ? supabase.from('online_sessions').select('*').eq('cohort_id', c.id) : Promise.resolve({ data: [] }),
     online ? supabase.from('online_profiles').select('time_zone').eq('student_id', profile.id).maybeSingle() : Promise.resolve({ data: null }),
@@ -84,7 +84,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
                 {liveRows.length === 0 && <p className="muted">No more sessions on the calendar.</p>}
                 {liveRows.map((r) => (
                   <div key={r.week}>
-                    <strong>{fmtZoned(r.times.start, tz)}</strong> · Week {r.week}: {r.title}
+                    <strong>{fmtZoned(r.times.start, tz)}</strong> · Week {localWeek(c, r.week)}: {r.title}
                   </div>
                 ))}
               </>
@@ -93,7 +93,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
                 {upcoming.length === 0 && <p className="muted">No more classes on the calendar.</p>}
                 {upcoming.map((w) => (
                   <div key={w.week}>
-                    <strong>{fmtDate(classDate(c, w.week))}</strong> · Week {w.week}: {w.title}
+                    <strong>{fmtDate(classDate(c, w.week))}</strong> · Week {localWeek(c, w.week)}: {w.title}
                   </div>
                 ))}
               </>
@@ -116,7 +116,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
               return (
                 <article key={w.week} id={`w${w.week}`} className={`week hw hw--${state}`}>
                   <div className="hw__top">
-                    <span className="week__n">Week {w.week}</span>
+                    <span className="week__n">Week {localWeek(c, w.week)}</span>
                     <span className={`chip chip--${state}`}>{LABEL[state]}</span>
                     <span className="small muted">Due {fmtDate(due, { year: 'numeric' })}</span>
                   </div>
@@ -147,7 +147,7 @@ export default async function Schedule({ searchParams }: { searchParams: Promise
                       </form>
                     </>
                   ) : state === 'later' ? (
-                    <p className="small muted" style={{ margin: 0 }}>This opens after the Week {w.week} class on {fmtDate(classDate(c, w.week))}.</p>
+                    <p className="small muted" style={{ margin: 0 }}>This opens after the Week {localWeek(c, w.week)} class on {fmtDate(classDate(c, w.week))}.</p>
                   ) : (
                     <details className="fold">
                       <summary>Turn it in</summary>

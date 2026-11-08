@@ -1,5 +1,7 @@
 import { requireInstructor } from '@/lib/auth';
-import { classDate, courseWeeks, fmtDate } from '@/lib/schedule';
+import { classDate, fmtDate, weekSpan } from '@/lib/schedule';
+import { EXEMPT_MAX_HOURS, exemptionIssues, money, termsFor } from '@/lib/pricing';
+import { MODULES, MODULE_KEYS, moduleLabel } from '@/lib/modules';
 import type { Cohort, Format } from '@/lib/types';
 import { addInvite, createCohort, removeInvite, updateCohort } from '../actions';
 
@@ -14,13 +16,21 @@ function Fields({ format, c }: { format: Format; c?: Cohort }) {
     <>
       <input type="hidden" name="format" value={format} />
       {c && <input type="hidden" name="id" value={c.id} />}
+      <div>
+        <label htmlFor={`mod-${id}`}>Module</label>
+        <select id={`mod-${id}`} name="module" defaultValue={c?.module ?? ''} required={!c}>
+          {c && !c.module && <option value="">Older full-course class</option>}
+          {!c && <option value="" disabled>Choose a module…</option>}
+          {MODULE_KEYS.map((k) => <option key={k} value={k}>{moduleLabel(k)}</option>)}
+        </select>
+      </div>
       <div className="row">
         <div><label htmlFor={`n-${id}`}>Name</label><input id={`n-${id}`} name="name" type="text" placeholder={online ? 'Online Winter 2027' : 'Spring 2027'} defaultValue={c?.name ?? ''} required /></div>
         <div><label htmlFor={`d-${id}`}>Week 1 {online ? 'live session' : 'class'} date</label><input id={`d-${id}`} name="start_date" type="date" defaultValue={c?.start_date ?? ''} required /></div>
       </div>
       <div className="row">
         <div><label htmlFor={`t-${id}`}>{online ? 'Session starts at (Killeen time)' : 'Class starts at'}</label><input id={`t-${id}`} name="class_start" type="time" defaultValue={c?.class_start.slice(0, 5) ?? '10:00'} required /></div>
-        <div><label htmlFor={`h-${id}`}>{online ? 'Session' : 'Class'} length (hours)</label><input id={`h-${id}`} name="class_hours" type="number" step="0.5" min="1" max="8" defaultValue={c?.class_hours ?? (online ? 2 : 3)} /></div>
+        <div><label htmlFor={`h-${id}`}>{online ? 'Session' : 'Class'} length (hours)</label><input id={`h-${id}`} name="class_hours" type="number" step="0.5" min="1" max="8" defaultValue={c?.class_hours ?? (online ? 3 : 3)} /></div>
       </div>
       <div style={{ maxWidth: 260 }}>
         <label htmlFor={`s-${id}`}>Seats</label>
@@ -54,16 +64,16 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
   return (
     <>
       <h1 className="page-title">Classes and enrollment</h1>
-      <p className="sub">Set a start date and every class, lab and due date is figured out for you. Online classes (3 months, live video) are set up here too. Only emails you add here can create an account.</p>
+      <p className="sub">Each class teaches one standalone module (A, B or C). Set a start date and every class, lab and due date is figured out for you. Online classes (live video) are set up here too. Only emails you add here can create an account.</p>
       {q.ok && <div className="notice notice--ok">Saved.</div>}
-      {q.err && <div className="notice notice--err">{q.err === 'email' ? 'Enter a valid email address.' : 'Check the name and start date and try again.'}</div>}
+      {q.err && <div className="notice notice--err">{q.err === 'email' ? 'Enter a valid email address.' : q.err === 'module' ? 'Choose which module this class teaches.' : q.err === 'hours' ? `Not saved: a module must be ${EXEMPT_MAX_HOURS} classroom hours or less and cost under $500. Shorten the class length.` : 'Check the name and start date and try again.'}</div>}
 
       <div className="grid grid--2">
         <section className="card stack">
           <h2>New in-person class</h2>
           <form action={createCohort} className="stack">
             <Fields format="in_person" />
-            <p className="small muted" style={{ margin: 0 }}>Classes repeat on the same weekday for {courseWeeks('in_person')} weeks at the studio.</p>
+            <p className="small muted" style={{ margin: 0 }}>Classes repeat on the same weekday for {termsFor('in_person').classes} weeks at the studio ({termsFor('in_person').classes} classes × the class length must be {EXEMPT_MAX_HOURS} hours or less). Each module is {money(termsFor('in_person').total)}.</p>
             <button className="btn" type="submit">Create class</button>
           </form>
         </section>
@@ -71,7 +81,7 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
           <h2>New online class</h2>
           <form action={createCohort} className="stack">
             <Fields format="online" />
-            <p className="small muted" style={{ margin: 0 }}>Live video sessions repeat weekly for {courseWeeks('online')} weeks (3 months). Students see times in their own time zone.</p>
+            <p className="small muted" style={{ margin: 0 }}>Live video sessions repeat weekly for {termsFor('online').classes} weeks. Students see times in their own time zone. Each online module is {money(termsFor('online').total)}.</p>
             <button className="btn" type="submit">Create online class</button>
           </form>
         </section>
@@ -79,11 +89,13 @@ export default async function Cohorts({ searchParams }: { searchParams: Promise<
 
       {C.map((c) => (
         <section className="card" key={c.id} style={{ marginTop: 16 }}>
-          <h2>{c.name} {c.format === 'online' && <span className="chip chip--soon">Online</span>}</h2>
+          <h2>{c.name} {c.module && <span className="chip">Module {MODULES[c.module].letter}</span>} {c.format === 'online' && <span className="chip chip--soon">Online</span>}</h2>
           <p className="muted small">
-            {day(c.class_weekday)}s · Week 1 {fmtDate(c.start_date, { year: 'numeric' })} · Week {courseWeeks(c.format)} {fmtDate(classDate(c, courseWeeks(c.format)), { year: 'numeric' })} · {c.seats} seats
+            {day(c.class_weekday)}s · Week 1 {fmtDate(c.start_date, { year: 'numeric' })} · Week {weekSpan(c).count} {fmtDate(classDate(c, weekSpan(c).last), { year: 'numeric' })} · {c.seats} seats
+            {c.module && ` · ${weekSpan(c).count * c.class_hours} classroom hours`}
             {c.format === 'online' && (c.meeting_url ? ' · meeting link set' : ' · no meeting link yet')}
           </p>
+          {c.module && exemptionIssues(c.format, c.class_hours).map((m) => <div className="notice notice--err" key={m}>{m}</div>)}
           <details className="fold">
             <summary>Change dates, time or {c.format === 'online' ? 'meeting link' : 'seats'}</summary>
             <form action={updateCohort} className="stack">

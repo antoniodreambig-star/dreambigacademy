@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireInstructor } from '@/lib/auth';
 import Avatar from '@/components/Avatar';
 import { loadCurriculum, SETUP_ITEMS, setupProgress } from '@/lib/online';
-import { dueDate, fmtDate, hasHomework, hwState, todayLocal } from '@/lib/schedule';
+import { dueDate, fmtDate, hasHomework, hwState, localWeek, todayLocal } from '@/lib/schedule';
 import AudioFeedback, { type FbComment } from '@/components/AudioFeedback';
 import type { Attendance, Cohort, OnlineProfile, Profile, Submission, SubmissionComment } from '@/lib/types';
 
@@ -29,7 +29,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
   const C = (cohorts ?? []) as Cohort[];
   const cohort = C.find((c) => c.id === profile.cohort_id) ?? null;
   const online = cohort?.format === 'online';
-  const { weeks: W } = await loadCurriculum(supabase, cohort?.format);
+  const { weeks: W } = await loadCurriculum(supabase, cohort?.format, cohort);
   const op = (opRow as OnlineProfile | null) ?? null;
   const prog = setupProgress(op);
   const S = new Map(((subs ?? []) as Submission[]).map((s) => [s.week, s]));
@@ -156,7 +156,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         return (
           <article key={w.week} id={`w${w.week}`} className={`week hw hw--${state}`}>
             <div className="hw__top">
-              <span className="week__n">Week {w.week}</span>
+              <span className="week__n">Week {cohort ? localWeek(cohort, w.week) : w.week}</span>
               <span className={`chip chip--${state}`}>{state === 'done' ? 'Turned in' : state === 'overdue' ? 'Overdue' : state === 'soon' ? 'Due soon' : state === 'upcoming' ? 'Upcoming' : 'Not assigned yet'}</span>
               <span className="small muted">Due {fmtDate(dueDate(cohort, w), { year: 'numeric' })}</span>
             </div>

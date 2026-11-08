@@ -6,7 +6,8 @@ import { requireInstructor, requireOwner } from '@/lib/auth';
 import { sendEmail, siteUrl } from '@/lib/email';
 import { ensureConsent, sendConsentEmail } from '@/lib/consents';
 import { PLAN_LABEL, isFormat, isPlan, planBlurb, termsFor } from '@/lib/pricing';
-import { isValidTimeZone } from '@/lib/schedule';
+import { daysBetween, isValidTimeZone, todayLocal } from '@/lib/schedule';
+import { ENROLL_CUTOFF_DAYS, MODULES, isModule } from '@/lib/modules';
 import type { Application, GuardianConsent } from '@/lib/types';
 
 const str = (f: FormData, k: string, max = 2000) => String(f.get(k) ?? '').trim().slice(0, max);
@@ -25,6 +26,11 @@ export async function decideApplication(f: FormData) {
 
   if (decision === 'accept') {
     const cohort = none(str(f, 'cohort_id', 40));
+    // TWC short-course exemption: no enrolling within 14 days of the module's start (students must have the course description and refund policy by then).
+    if (cohort) {
+      const { data: co } = await supabase.from('cohorts').select('start_date').eq('id', cohort).maybeSingle();
+      if (co?.start_date && daysBetween(todayLocal(), co.start_date as string) < ENROLL_CUTOFF_DAYS) redirect('/admin/applications?err=late');
+    }
     const planRaw = str(f, 'plan', 10);
     const format = app.format;
     // The monthly plan may not be offered for the online course.
@@ -45,7 +51,7 @@ export async function decideApplication(f: FormData) {
       await sendEmail(
         app.email,
         'You’re in: Dream Big Academy',
-        `Hi ${first},\n\nCongratulations, you’ve been accepted into the ${online ? 'online ' : ''}Dream Big Studios Audio Engineering Academy!\n\nTuition plan: ${plan ? `${PLAN_LABEL[plan]} (${price})` : price}.${note ? `\n\n${note}` : ''}${app.under_18 ? '\n\nBecause you’re under 18, we emailed your parent or guardian a consent form. It needs to be signed before you start.' : ''}\n\nTo get started, go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll pick a username and password:\n\n${siteUrl()}/login${online ? '\n\nOnce you’re in, open the “Set up” page. It has a checklist so you’re ready for the first live session, and you’ll find the meeting link, your schedule in your own time zone, and recordings of every session.' : ''}`,
+        `Hi ${first},\n\nCongratulations, you’ve been accepted into ${app.module ? `Module ${MODULES[app.module].letter}: ${MODULES[app.module].name}` : `the ${online ? 'online ' : ''}Dream Big Studios Audio Engineering Academy`} (${online ? 'online' : 'in person'}) at the Dream Big Studios Audio Engineering Academy!\n\nTuition for this module: ${plan ? `${PLAN_LABEL[plan]} (${price})` : price}.${note ? `\n\n${note}` : ''}${app.under_18 ? '\n\nBecause you’re under 18, we emailed your parent or guardian a consent form. It needs to be signed before you start.' : ''}\n\nTo get started, go to the link below, enter this email address and tap “Email me a link”. The first time, you’ll pick a username and password:\n\n${siteUrl()}/login${online ? '\n\nOnce you’re in, open the “Set up” page. It has a checklist so you’re ready for the first live session, and you’ll find the meeting link, your schedule in your own time zone, and recordings of every session.' : ''}`,
       );
     }
   } else if (decision === 'waitlist') {
@@ -104,9 +110,11 @@ export async function addStudent(f: FormData) {
   const cohort = none(str(f, 'cohort_id', 40));
   const formatRaw = str(f, 'format', 10);
   const format = isFormat(formatRaw) ? formatRaw : 'in_person';
+  const moduleRaw = str(f, 'module', 1);
   const { data, error } = await supabase
     .from('applications')
     .insert({
+      module: isModule(moduleRaw) ? moduleRaw : null,
       full_name: name,
       email,
       phone: none(str(f, 'phone', 40)),
