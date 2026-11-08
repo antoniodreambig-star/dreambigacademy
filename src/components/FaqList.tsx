@@ -6,8 +6,13 @@ export default function FaqList({ items }: { items: Faq[] }) {
     <div className="faq">
       {items.map((f) => (
         <details key={f.q} className="faq__item">
-          <summary>{f.q}</summary>
-          <p>{f.a}</p>
+          <summary>
+            <span>{f.q}</span>
+            <span className="faq__icon" aria-hidden="true" />
+          </summary>
+          <div className="faq__body">
+            <p>{f.a}</p>
+          </div>
         </details>
       ))}
     </div>
